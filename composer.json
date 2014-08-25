@@ -1,0 +1,22 @@
+{
+    "name": "deathbeam/hobomvc",
+    "type": "project",
+    "description": "Very simple MVC framework",
+    "keywords": ["mvc", "skeleton", "boilerplate", "naked", "barebone", "application"],
+    "homepage": "https://github.com/deathbeam/hobomvc",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Thomas Slusny",
+            "homepage": "http://deathbeam.github.io",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/deathbeam/hobomvc/issues",
+        "source": "https://github.com/deathbeam/hobomvc"
+    },
+    "require": {
+        "php": ">=5.3.0"
+    }
+}
