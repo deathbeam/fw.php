@@ -1,7 +1,7 @@
 # Hobo MVC
 
-Hobo MVC is aiming to be super simple and super intuitive MVC framework. It is inspired by F3(fat free) framework, but
-Hobo do not have that many extravagant nonsense as F3. Hobo core is currently built on 3 libs, and they are `router.php`,
+Hobo MVC is aiming to be super simple and super intuitive MVC framework. It is inspired by 2 my personally favorite MVC frameworks, F3(fat free) framework and PHP-MVC framework, but
+Hobo do not have that many features as both of them. Hobo core is currently built on 3 libs, and they are `router.php`,
 `session.php` and `view.php`. Names of these libs are self-explaining.
 
 ## Installation
@@ -12,7 +12,7 @@ First, copy this repo into a public accessible folder on your server (or to publ
 Common techniques are a) downloading and extracting the .zip / .tgz by hand, b) cloning the repo with git (into var/www if you are on Linux or wamp/www if you are on Windows and have Wamp installed)
 
 ```
-git clone https://github.com/panique/php-mvc.git /your/public/web/folder
+git clone https://github.com/deathbeam/hobomvc.git /your/public/web/folder
 ```
 
 ### Getting the repo via Composer
