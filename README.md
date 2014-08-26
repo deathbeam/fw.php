@@ -21,6 +21,7 @@ git clone https://github.com/deathbeam/hobomvc.git /your/public/web/folder
 composer create-project deathbeam/hobomvc /your/public/web/folder dev-master
 ```
 
+### Configure .htaccess
 1. mod_rewrite is required for Hobo routing. Most of web hosts have it already installed, but if you are hosting Hobo by self, you need to install it.
 
 2. Change the .htaccess file from
