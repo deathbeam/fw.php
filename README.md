@@ -94,7 +94,7 @@ $hobo->config('config.ini');
 ```
 And config.ini basic configuration contents are below. If you do not want to use database, simply do not add
 configuration settings for database.
-```
+```INI
 [globals]
 URL=http://127.0.0.1/hobomvc/
 DB_TYPE=mysql
