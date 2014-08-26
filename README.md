@@ -37,35 +37,16 @@ If you have put the project into a sub-folder, then put the name of the sub-fold
 RewriteBase /sub-folder/
 ```
 
-4. Edit the *application/config/config.php*, change this line
-```php
-define('URL', 'http://127.0.0.1/hobomvc/');
-```
-to where your project is. Real domain, IP or 127.0.0.1 when developing locally. Make sure you put the sub-folder
-in here (when installing in a sub-folder) too, also don't forget the trailing slash !
-
-5. Edit the *application/config/config.php*, change these lines
-```php
-define('USE_DB', false)
-define('DB_TYPE', 'mysql');
-define('DB_HOST', '127.0.0.1');
-define('DB_NAME', 'php-mvc');
-define('DB_USER', 'root');
-define('DB_PASS', 'mysql');
-```
-to your database credentials. Also, if you wanna use database, change USE_DB to true. Only change the type `mysql` if you
-know what you are doing.
-
 ## A quickstart tutorial
 
 To quickly create your first hello world application in Hobo, here is step by step tutorial.
 
-1. Include Hobo base at start of your index.php file, right after `<?php` PHP opening tag.
-```
+Include Hobo base at start of your index.php file, right after `<?php` PHP opening tag.
+```php
 $hobo = require("application/base.php");
 ```
-2. Now we will create 2 functions what will echo simple hello world messages when called.
-```
+Now we will create 2 functions what will echo simple hello world messages when called.
+```php
 function index() {
 	echo "Hello world.";
 }
@@ -73,15 +54,53 @@ function error() {
 	echo "404! This is not the web page you are looking for.;
 }
 ```
-3. And now it is time to link these 2 functions to their URL routes. We will set error function to be default route
+And now it is time to link these 2 functions to their URL routes. We will set error function to be default route
 because default route is called when we will type relative URL what is not defined in routing table.
-```
+```php
 $hobo->route("/", "index");
 $hobo->default_route("error");
 ```
-4. And last line in file should always be this command what will execute Hobo router, so we will add it after all above code.
-```
+And last line in file should always be this command what will execute Hobo router, so we will add it after all above code.
+```php
 $hobo->run();
+```
+
+## Configuration
+Hobo can be configured in 2 ways. First one is defining globals and second one is loading them from config file.
+
+### Defining globals
+This is basic configuration using `$hobo=>set` function. Add these functions right after `$hobo = require("application/base.php");`
+#### Configuration for: Project URL
+Put URL to your project folder here, for local development "127.0.0.1" or "localhost" (plus sub-folder) is fine
+```php
+$hobo->set('URL', 'http://127.0.0.1/hobomvc/');
+```
+#### Configuration for: Database
+This is the place where you define your database credentials, database type etc. If you do not want to use database, simply do not add these
+configuration setting for database.
+```php
+$hobo->set('DB_TYPE','mysql');
+$hobo->set('DB_HOST','127.0.0.1');
+$hobo->set('DB_NAME','hobomvc');
+$hobo->set('DB_USER','root');
+$hobo->set('DB_PASS','mysql');
+```
+
+### Loading configuration file
+Loading configuration file is as easy as drinking beer.
+```php
+$hobo->config('config.ini');
+```
+And config.ini basic configuration contents are below. If you do not want to use database, simply do not add
+configuration settings for database.
+```
+[globals]
+URL=http://127.0.0.1/hobomvc/
+DB_TYPE=mysql
+DB_HOST=127.0.0.1
+DB_NAME=hobomvc
+DB_USER=root
+DB_PASS=mysql
 ```
 
 ## License

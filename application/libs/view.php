@@ -1,24 +1,19 @@
 <?php
 class View
 {
-    protected $file = null;
+    protected $files = array();
     protected $fields = array();
      
-    public function __construct($template, array $fields = array()) {
-		$this->template = $template;
-        if (!is_file($template) || !is_readable($template)) {
+    public function __construct() {
+    }
+	
+	public function attach($file) {
+		if (!is_file($file) || !is_readable($file)) {
             throw new InvalidArgumentException(
                 "The template '$this->template' is invalid.");   
         }
-        if (!empty($fields)) {
-            foreach ($fields as $name => $value) {
-                $this->$name = $value;
-            }
-        } 
-    }
-       
-    public function getTemplate() {
-        return $this->template;
+        $this->files[$file] = $file;
+        return $this;
     }
      
     public function __set($name, $value) {
@@ -29,7 +24,7 @@ class View
     public function __get($name) {
         if (!isset($this->fields[$name])) {
             throw new InvalidArgumentException(
-                "Unable to get the field '$field'.");
+                "Unable to get the field '$name'.");
         }
         $field = $this->fields[$name];
         return $field instanceof Closure ? $field($this) : $field;
@@ -49,9 +44,18 @@ class View
     }
      
     public function render() {
+		$fw=Base::instance();
+		$globalfields=$fw->fields();
+		extract($globalfields);
+		unset($fw);
+		unset($globalfields);
         extract($this->fields);
         ob_start();
-        include $this->template;
+		if (!empty($this->files)) {
+            foreach ($this->files as $file) {
+                include $file;
+            }
+        }
         return ob_get_clean();
     }
 }

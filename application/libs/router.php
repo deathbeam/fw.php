@@ -44,6 +44,8 @@
  */
 class Router
 {
+  private static $instance;
+  
   /**
    * Contains the callback function to execute, retrieved during run()
    *
@@ -118,16 +120,15 @@ class Router
    *
    * @param string $url
    */
-  public function __construct($url = null)
+  private function __construct()
   {
-    if ($url == null) {
+    $url = null;
       // Get the current URL, differents depending on platform/server software
       if (!empty($_SERVER['REQUEST_URL'])) {
         $url = $_SERVER['REQUEST_URL'];
       } else {
         $url = $_SERVER['REQUEST_URI'];
       }
-    }
 
     // Store the dirty version of the URL
     $this->url_dirty = $url;
@@ -135,6 +136,13 @@ class Router
     // Clean the URL, removing the protocol, domain, and base directory if there is one
     $this->url_clean = $this->__get_clean_url($this->url_dirty);
   }
+  
+   public static function instance() { 
+		if(!self::$instance) { 
+			self::$instance = new self(); 
+		}
+		return self::$instance; 
+	}
 
   /**
    * Enables the display of errors such as malformed URL routing rules or
