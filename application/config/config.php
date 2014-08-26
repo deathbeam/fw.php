@@ -19,6 +19,6 @@ define('URL', 'http://127.0.0.1/hobomvc/');
 define('USE_DB', false);
 define('DB_TYPE', 'mysql');
 define('DB_HOST', '127.0.0.1');
-define('DB_NAME', 'php-mvc');
+define('DB_NAME', 'hobomvc');
 define('DB_USER', 'root');
 define('DB_PASS', 'mysql');
