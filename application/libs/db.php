@@ -1,30 +1,18 @@
 <?php
-class Db{
-	private static $instance;
+class Db extends Prefab {
     private $dbh;
 	private $stmt;
-	private $init = false;
- 
-    private function __construct(){
-    }
-	
-	public static function instance() { 
-		if(!self::$instance) { 
-			self::$instance = new self(); 
-		}
-		return self::$instance; 
-	}
 	
 	public function init() {
 		if ($this->init == true) return;
-		$fw = Base::instance();
+		$fw = Base::getInstance();
 		$dsn = $fw->get('DB_TYPE').':host='.$fw->get('DB_HOST').';dbname='.$fw->get('DB_NAME');
         $options = array(
             PDO::ATTR_PERSISTENT    => true,
             PDO::ATTR_ERRMODE       => PDO::ERRMODE_EXCEPTION
         );
         $this->dbh = new PDO($dsn, $fw->get('DB_USER'), $fw->get('DB_PASS'), $options);
-		$this->init == true;
+		$this->init = true;
 	}
 	
 	public function query($query){
@@ -75,4 +63,4 @@ class Db{
 		return $this->dbh->rollBack();
 	}
 }
-return Db::instance();
+return Db::getInstance();

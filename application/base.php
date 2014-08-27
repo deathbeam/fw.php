@@ -1,30 +1,44 @@
 <?php
-if (file_exists('../vendor/autoload.php')) {
-    require '../vendor/autoload.php';
+abstract class Prefab {
+	protected $init = false;
+    public static function getInstance() {
+        static $instance = null;
+        if (null === $instance) {
+            $instance = new static();
+        }
+
+        return $instance;
+    }
+	abstract public function init();
+    protected function __construct() { }
+    private function __clone() { }
+    private function __wakeup() { }
 }
 
-class Base {
+class Base extends Prefab {
 	private static $instance;
-	private $router = null;
 	private $default_route = null;
 	private $fields = array();
-	public $db = null;
-	public $session = null;
-	public $cookie = null;
+	private $registry = array();
 	
-	public function __construct() {
-		$this->router = require 'libs/router.php';
-		$this->session = require 'libs/session.php';
-		$this->cookie = require 'libs/cookie.php';
-		$this->db = require 'libs/db.php';
+	protected function __construct() {
+		require 'autoload.php';
 	}
 	
-	public static function instance() { 
-		if(!self::$instance) { 
-			self::$instance = new self(); 
-		}
-		return self::$instance; 
+	public function init() {
+		if ($this->init == true) return;
+		foreach($this->registry as $key => $value) $value->init();
+		$this->init = true;
 	}
+	
+	public function __set($name, $value) {
+		$this->registry[$name] = $value;
+		return $this;
+    }
+	
+	public function __get($name) {
+		return $this->registry[$name];
+    }
 	
 	function config($file) {
 		$config = parse_ini_file($file, true);
@@ -93,12 +107,6 @@ class Base {
     }
 	
 	public function run() {
-		// Change subdir of router if URL is set
-		if ($this->exists('URL')) {
-			$path=parse_url($this->get('URL'));
-			$dir=substr($path['path'], 0, -1);
-			$this->router->setBasePath($dir);
-		}
 		// Execute functions based on route match
 		$match = $this->router->match();
 		if($match) {
@@ -109,8 +117,8 @@ class Base {
 			$callback = $this->default_route;
 			$params = array();
 		}
-		call_user_func_array($callback, array('hobo' => Base::instance(), 'params' =>$params));
+		call_user_func_array($callback, array('hobo' => $this, 'params' =>$params));
 	}
 }
 
-return Base::instance();
+return Base::getInstance();

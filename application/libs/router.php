@@ -1,7 +1,6 @@
 <?php
 
-class Router {
-	private static $instance;
+class Router extends Prefab {
 	protected $routes = array();
 	protected $namedRoutes = array();
 	protected $basePath = '';
@@ -13,15 +12,18 @@ class Router {
 		'**' => '.++',
 		''   => '[^/\.]++'
 	);
-
-	private function __construct() {
-	}
 	
-	public static function instance() { 
-		if(!self::$instance) { 
-			self::$instance = new self(); 
+	public function init() {
+		if ($this->init == true) return;
+		$fw = Base::getInstance();
+		if ($fw->exists('URL')) {
+			$url=parse_url($fw->get('URL'));
+			$dir=substr($url['path'], 0, -1);
+		} else {
+			$dir='';
 		}
-		return self::$instance; 
+		$this->basePath = $dir;
+		$this->init = true;
 	}
 
 	/**
@@ -266,4 +268,4 @@ class Router {
 		return "`^$route$`u";
 	}
 }
-return Router::instance();
+return Router::getInstance();

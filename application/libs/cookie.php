@@ -1,25 +1,12 @@
 <?php
-class Cookie
-{
-	private static $instance;
+class Cookie extends Prefab {
 	private $expiry = null;
 	private $path = null;
 	private $domain = null;
-	private $init = false;
-	
-	private function __construct() {
-	}
-	
-	public static function instance() { 
-		if(!self::$instance) { 
-			self::$instance = new self(); 
-		}
-		return self::$instance; 
-	}
 	
 	public function init() {
 		if ($this->init == true) return;
-		$fw = Base::instance();
+		$fw = Base::getInstance();
 		$path = ($fw->exists('COOKIE_PATH') ? $fw->get('COOKIE_PATH') : '/');
 		$expiry = ($fw->exists('COOKIE_EXPIRY') ? $fw->get('COOKIE_EXPIRY') : 86400);
 		if ($expiry === -1)
@@ -31,7 +18,7 @@ class Cookie
 		$this->path = $path;
 		$this->expiry = $expiry;
 		$this->domain = $_SERVER['HTTP_HOST'];
-		$this->init == true;
+		$this->init = true;
 	}
 	
 	public function toArray() {
@@ -71,4 +58,4 @@ class Cookie
         return $this;
     }
 }
-return Cookie::instance();
+return Cookie::getInstance();

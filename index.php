@@ -1,9 +1,10 @@
 <?php
+// Load Hobo base
 $hobo = require('application/base.php');
+// Load configuration
 $hobo->config('config.ini');
-$hobo->cookie->init();
-$hobo->session->init();
-$hobo->db->init();
+// Initialize libs specified in autoload.php
+$hobo->init();
 
 // Use $hobo->db to fetch data from database
 $hobo->db->query('SELECT FName, LName, Age, Gender FROM mytable WHERE LName = :lname');

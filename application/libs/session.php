@@ -1,27 +1,15 @@
 <?php
-class Session {
-	private static $instance;
+class Session extends Prefab {
 	private $name = false;
-	private $init = false;
-	
-	private function __construct() {
-	}
-	
-	public static function instance() { 
-		if(!self::$instance) { 
-			self::$instance = new self(); 
-		}
-		return self::$instance; 
-	}
 	
 	public function init() {
 		if ($this->init == true) return;
-		$fw = Base::instance();
+		$fw = Base::getInstance();
 		if ($fw->exists('SESSION_NAME')) {
 			session_name($fw->get('SESSION_NAME'));
 		}
 		session_start();
-		$this->init == true;
+		$this->init = true;
 	}
 	
 	public function toArray() {
@@ -55,4 +43,4 @@ class Session {
         return $this;
     }
 }
-return Session::instance();
+return Session::getInstance();
