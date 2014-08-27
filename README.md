@@ -58,7 +58,7 @@ function error() {
 And now it is time to link these 2 functions to their URL routes. We will set error function to be default route
 because default route is called when we will type relative URL what is not defined in routing table.
 ```php
-$hobo->route("/", "index");
+$hobo->route("GET /", "index");
 $hobo->default_route("error");
 ```
 And last line in file should always be this command what will execute Hobo router, so we will add it after all above code.
@@ -97,6 +97,9 @@ configuration settings for database.
 ```INI
 [globals]
 URL=http://127.0.0.1/hobomvc/
+SESSION_NAME=hobomvc
+COOKIE_PATH=/
+COOKIE_EXPIRY=31536000
 DB_TYPE=mysql
 DB_HOST=127.0.0.1
 DB_NAME=hobomvc

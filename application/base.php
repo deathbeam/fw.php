@@ -3,20 +3,20 @@ if (file_exists('../vendor/autoload.php')) {
     require '../vendor/autoload.php';
 }
 
-require 'libs/router.php';
-require 'libs/view.php';
-require 'libs/session.php';
-
 class Base {
 	private static $instance;
 	private $router = null;
+	private $default_route = null;
 	private $fields = array();
 	public $db = null;
 	public $session = null;
+	public $cookie = null;
 	
 	public function __construct() {
-		$this->router = Router::instance();
-		$this->session = Session::instance();
+		$this->router = require 'libs/router.php';
+		$this->session = require 'libs/session.php';
+		$this->cookie = require 'libs/cookie.php';
+		$this->db = require 'libs/db.php';
 	}
 	
 	public static function instance() { 
@@ -24,46 +24,36 @@ class Base {
 			self::$instance = new self(); 
 		}
 		return self::$instance; 
-	} 
-
-    private function openDatabaseConnection() {
-		if (!($this->exists('DB_TYPE')) or 
-			!($this->exists('DB_HOST')) or
-			!($this->exists('DB_NAME')) or
-			!($this->exists('DB_USER')) or
-			!($this->exists('DB_PASS'))) {
-			return;
-		}
-		$options = array(PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ, PDO::ATTR_ERRMODE => PDO::ERRMODE_WARNING);
-		try {
-			$this->db = new PDO(
-				$this->get('DB_TYPE').':host='.
-				$this->get('DB_HOST').';dbname='.
-				$this->get('DB_NAME'), 
-				$this->get('DB_USER'), 
-				$this->get('DB_PASS'), $options);
-		} catch (Exception $e) {
-			throw new Exception("Database not exists or its configuration is wrong.");
-		}
-    }
+	}
 	
 	function config($file) {
-		$config = parse_ini_file($file);
-		foreach ($config as $key => $value) {
-			$this->set($key, $value);
+		$config = parse_ini_file($file, true);
+		if (isset($config['globals'])) {
+			foreach ($config['globals'] as $key => $value) {
+				$this->set($key, $value);
+			}
+		}
+		if (isset($config['routes'])) {
+			foreach ($config['routes'] as $key => $value) {
+				$target = preg_replace('/\s+/', '', $value);
+				$this->route($key, $target);
+			}
 		}
 	}
 	
-	public function fields() {
+	public function toArray() {
 		return $this->fields;
 	}
 	
 	public function default_route($callback) {
-		$this->router->default_route($callback);
+		$this->default_route = $callback;
 	}
   
-	public function route($route, $callback) {
-		$this->router->route($route, $callback);
+	public function route($pattern, $callback) {
+		$arr = explode("/", $pattern, 2);
+		$method = preg_replace('/\s+/', '',$arr[0]);
+		$route = '/'.preg_replace('/\s+/', '',$arr[1]);
+		$this->router->map($method,$route,$callback);
 	}
 	
 	public function set($name, $value) {
@@ -93,9 +83,33 @@ class Base {
         return $this;
     }
 	
+	public function render($file) {
+		$session = $this->session->toArray();
+		$cookie = $this->cookie->toArray();
+		extract($this->toArray());
+        ob_start();
+		include $file;
+        return ob_get_clean();
+    }
+	
 	public function run() {
-		$this->openDatabaseConnection();
-		$this->router->execute();
+		// Change subdir of router if URL is set
+		if ($this->exists('URL')) {
+			$path=parse_url($this->get('URL'));
+			$dir=substr($path['path'], 0, -1);
+			$this->router->setBasePath($dir);
+		}
+		// Execute functions based on route match
+		$match = $this->router->match();
+		if($match) {
+			$callback = $match['target'];
+			$params = $match['params'];
+		}
+		else {
+			$callback = $this->default_route;
+			$params = array();
+		}
+		call_user_func_array($callback, array('hobo' => Base::instance(), 'params' =>$params));
 	}
 }
 

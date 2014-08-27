@@ -1,362 +1,269 @@
 <?php
-/**
- * Igniter Router Class
- *
- * This it the Igniter URL Router, the layer of a web application between the
- * URL and the function executed to perform a request. The router determines
- * which function to execute for a given URL.
- *
- * <code>
- * $router = new \Igniter\Router;
- *
- * // Adding a basic route
- * $router->route( '/login', 'login_function' );
- *
- * // Adding a route with a named alphanumeric capture, using the <:var_name> syntax
- * $router->route( '/user/view/<:username>', 'view_username' );
- *
- * // Adding a route with a named numeric capture, using the <#var_name> syntax
- * $router->route( '/user/view/<#user_id>', array( 'UserClass', 'view_user' ) );
- *
- * // Adding a route with a wildcard capture (Including directory separtors), using
- * // the <*var_name> syntax
- * $router->route( '/browse/<*categories>', 'category_browse' );
- *
- * // Adding a wildcard capture (Excludes directory separators), using the
- * // <!var_name> syntax
- * $router->route( '/browse/<!category>', 'browse_category' );
- *
- * // Adding a custom regex capture using the <:var_name|regex> syntax
- * $router->route( '/lookup/zipcode/<:zipcode|[0-9]{5}>', 'zipcode_func' );
- *
- * // Specifying priorities
- * $router->route( '/users/all', 'view_users', 1 ); // Executes first
- * $router->route( '/users/<:status>', 'view_users_by_status', 100 ); // Executes after
- *
- * // Specifying a default callback function if no other route is matched
- * $router->default_route( 'page_404' );
- *
- * // Run the router
- * $router->execute();
- * </code>
- *
- * @since 2.0.0
- */
-class Router
-{
-  private static $instance;
-  
-  /**
-   * Contains the callback function to execute, retrieved during run()
-   *
-   * @var string|array
-   */
-  protected $callback = null;
 
-  /**
-   * Contains the callback function to execute if none of the given routes can
-   * be matched to the current URL.
-   *
-   * @var atring|array
-   */
-  protected $default_route = null;
+class Router {
+	private static $instance;
+	protected $routes = array();
+	protected $namedRoutes = array();
+	protected $basePath = '';
+	protected $matchTypes = array(
+		'i'  => '[0-9]++',
+		'a'  => '[0-9A-Za-z]++',
+		'h'  => '[0-9A-Fa-f]++',
+		'*'  => '.+?',
+		'**' => '.++',
+		''   => '[^/\.]++'
+	);
 
-  /**
-   * Contains the last route executed, used when chaining methods calls in
-   * the route() function (Such as for put(), post(), and delete()).
-   *
-   * @var pointer
-   */
-  protected $last_route = null;
-
-  /**
-   * An array containing the parameters to pass to the callback function,
-   * retrieved during run()
-   *
-   * @var array
-   */
-  protected $params = array();
-
-  /**
-   * An array containing the list of routing rules and their callback
-   * functions, as well as their priority and any additional paramters.
-   *
-   * @var array
-   */
-  protected $routes = array();
-
-  /**
-   * An array containing the list of routing rules before they are parsed
-   * into their regex equivalents, used for debugging and test cases
-   *
-   * @var array
-   */
-  protected $routes_original = array();
-
-  /**
-   * Whether or not to display errors for things like malformed routes or
-   * conflicting routes.
-   *
-   * @var boolean
-   */
-  protected $show_errors = true;
-
-  /**
-   * A sanitized version of the URL, excluding the domain and base component
-   *
-   * @var string
-   */
-  protected $url_clean = '';
-
-  /**
-   * The dirty URL, direct from $_SERVER['REQUEST_URI']
-   *
-   * @var string
-   */
-  protected $url_dirty = '';
-
-  /**
-   * Initializes the router by getting the URL and cleaning it.
-   *
-   * @param string $url
-   */
-  private function __construct()
-  {
-    $url = null;
-      // Get the current URL, differents depending on platform/server software
-      if (!empty($_SERVER['REQUEST_URL'])) {
-        $url = $_SERVER['REQUEST_URL'];
-      } else {
-        $url = $_SERVER['REQUEST_URI'];
-      }
-
-    // Store the dirty version of the URL
-    $this->url_dirty = $url;
-
-    // Clean the URL, removing the protocol, domain, and base directory if there is one
-    $this->url_clean = $this->__get_clean_url($this->url_dirty);
-  }
-  
-   public static function instance() { 
+	private function __construct() {
+	}
+	
+	public static function instance() { 
 		if(!self::$instance) { 
 			self::$instance = new self(); 
 		}
 		return self::$instance; 
 	}
 
-  /**
-   * Enables the display of errors such as malformed URL routing rules or
-   * conflicting routing rules. Not recommended for production sites.
-   *
-   * @return self
-   */
-  public function show_errors()
-  {
-    $this->show_errors = true;
+	/**
+	 * Add multiple routes at once from array in the following format:
+	 *
+	 *   $routes = array(
+	 *      array($method, $route, $target, $name)
+	 *   );
+	 *
+	 * @param array $routes
+	 * @return void
+	 * @author Koen Punt
+	 */
+	public function addRoutes($routes){
+		if(!is_array($routes) && !$routes instanceof Traversable) {
+			throw new \Exception('Routes should be an array or an instance of Traversable');
+		}
+		foreach($routes as $route) {
+			call_user_func_array(array($this, 'map'), $route);
+		}
+	}
 
-    return $this;
-  }
+	/**
+	 * Set the base path.
+	 * Useful if you are running your application from a subdirectory.
+	 */
+	public function setBasePath($basePath) {
+		$this->basePath = $basePath;
+	}
 
-  /**
-   * Disables the display of errors such as malformed URL routing rules or
-   * conflicting routing rules. Not recommended for production sites.
-   *
-   * @return self
-   */
-  public function hide_errors()
-  {
-    $this->show_errors = false;
+	/**
+	 * Add named match types. It uses array_merge so keys can be overwritten.
+	 *
+	 * @param array $matchTypes The key is the name and the value is the regex.
+	 */
+	public function addMatchTypes($matchTypes) {
+		$this->matchTypes = array_merge($this->matchTypes, $matchTypes);
+	}
 
-    return $this;
-  }
+	/**
+	 * Map a route to a target
+	 *
+	 * @param string $method One of 5 HTTP Methods, or a pipe-separated list of multiple HTTP Methods (GET|POST|PATCH|PUT|DELETE)
+	 * @param string $route The route regex, custom regex must start with an @. You can use multiple pre-set regex filters, like [i:id]
+	 * @param mixed $target The target where this route should point to. Can be anything.
+	 * @param string $name Optional name of this route. Supply if you want to reverse route this url in your application.
+	 */
+	public function map($method, $route, $target, $name = null) {
 
-  /**
-   * If the router cannot match the current URL to any of the given routes,
-   * the function passed to this method will be executed instead. This would
-   * be useful for displaying a 404 page for example.
-   *
-   * @param  Callable $callback
-   * @return self
-   */
-  public function default_route($callback)
-  {
-    $this->default_route = $callback;
+		$this->routes[] = array($method, $route, $target, $name);
 
-    return $this;
-  }
+		if($name) {
+			if(isset($this->namedRoutes[$name])) {
+				throw new \Exception("Can not redeclare route '{$name}'");
+			} else {
+				$this->namedRoutes[$name] = $route;
+			}
 
-  /**
-   * Tries to match one of the URL routes to the current URL, otherwise
-   * execute the default function and return false.
-   *
-   * @return boolean
-   */
-  public function run()
-  {
-    // Whether or not we have matched the URL to a route
-    $matched_route = false;
+		}
 
-    // Sort the array by priority
-    ksort($this->routes);
+		return;
+	}
 
-    // Loop through each priority level
-    foreach ($this->routes as $priority => $routes) {
-      // Loop through each route for this priority level
-      foreach ($routes as $route => $callback) {
-        // Does the routing rule match the current URL?
-        if (preg_match($route, $this->url_clean, $matches)) {
-          // A routing rule was matched
-          $matched_route = TRUE;
+	/**
+	 * Reversed routing
+	 *
+	 * Generate the URL for a named route. Replace regexes with supplied parameters
+	 *
+	 * @param string $routeName The name of the route.
+	 * @param array @params Associative array of parameters to replace placeholders with.
+	 * @return string The URL of the route with named parameters in place.
+	 */
+	public function generate($routeName, array $params = array()) {
 
-          // Parameters to pass to the callback function
-          $params = array($this->url_clean);
+		// Check if named route exists
+		if(!isset($this->namedRoutes[$routeName])) {
+			throw new \Exception("Route '{$routeName}' does not exist.");
+		}
 
-          // Get any named parameters from the route
-          foreach ($matches as $key => $match) {
-            if (is_string($key)) {
-              $params[] = $match;
-            }
-          }
+		// Replace named parameters
+		$route = $this->namedRoutes[$routeName];
+		
+		// prepend base path to route url again
+		$url = $this->basePath . $route;
 
-          // Store the parameters and callback function to execute later
-          $this->params   = $params;
-          $this->callback = $callback;
+		if (preg_match_all('`(/|\.|)\[([^:\]]*+)(?::([^:\]]*+))?\](\?|)`', $route, $matches, PREG_SET_ORDER)) {
 
-          // Return the callback and params, useful for unit testing
-          return array('callback' => $callback, 'params' => $params, 'route' => $route, 'original_route' => $this->routes_original[$priority][$route]);
-          }
-      }
-    }
+			foreach($matches as $match) {
+				list($block, $pre, $type, $param, $optional) = $match;
 
-    // Was a match found or should we execute the default callback?
-    if (!$matched_route && $this->default_route !== null) {
-	  $this->params   = $params = array($this->url_clean);
-      $this->callback = $this->default_route;
-      return array('params' => $this->url_clean, 'callback' => $this->default_route, 'route' => false, 'original_route' => false);
-    }
-  }
+				if ($pre) {
+					$block = substr($block, 1);
+				}
 
-  /**
-   * Calls the appropriate callback function and passes the given parameters
-   * given by Router::run()
-   *
-   * @return boolean
-   */
-  public function dispatch()
-  {
-    if ($this->callback == null || $this->params == null) {
-      throw new Exception('No callback or parameters found, please run $router->run() before $router->dispatch()');
+				if(isset($params[$param])) {
+					$url = str_replace($block, $params[$param], $url);
+				} elseif ($optional) {
+					$url = str_replace($pre . $block, '', $url);
+				}
+			}
 
-      return false;
-    }
 
-    call_user_func_array($this->callback, $this->params);
+		}
 
-    return true;
-  }
+		return $url;
+	}
 
-  /**
-   * Runs the router matching engine and then calls the dispatcher
-   *
-   * @uses Router::run()
-   * @uses Router::dispatch()
-   */
-  public function execute()
-  {
-    $this->run();
-    $this->dispatch();
-  }
+	/**
+	 * Match a given Request Url against stored routes
+	 * @param string $requestUrl
+	 * @param string $requestMethod
+	 * @return array|boolean Array with route information on success, false on failure (no match).
+	 */
+	public function match($requestUrl = null, $requestMethod = null) {
 
-  /**
-   * Adds a new URL routing rule to the routing table, after converting any of
-   * our special tokens into proper regular expressions.
-   *
-   * @param  string   $route
-   * @param  Callable $callback
-   * @param  integer  $priority
-   * @return boolean
-   */
-  public function route($route, $callback, $priority = 10)
-  {
-    // Keep the original routing rule for debugging/unit tests
-    $original_route = $route;
+		$params = array();
+		$match = false;
 
-    // Make sure the route ends in a / since all of the URLs will
-    $route = rtrim($route, '/') . '/';
+		// set Request Url if it isn't passed as parameter
+		if($requestUrl === null) {
+			$requestUrl = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
+		}
 
-    // Custom capture, format: <:var_name|regex>
-    $route = preg_replace('/\<\:(.*?)\|(.*?)\>/', '(?P<\1>\2)', $route);
+		// strip base path from request url
+		$requestUrl = substr($requestUrl, strlen($this->basePath));
 
-    // Alphanumeric capture (0-9A-Za-z-_), format: <:var_name>
-    $route = preg_replace('/\<\:(.*?)\>/', '(?P<\1>[A-Za-z0-9\-\_]+)', $route);
+		// Strip query string (?a=b) from Request Url
+		if (($strpos = strpos($requestUrl, '?')) !== false) {
+			$requestUrl = substr($requestUrl, 0, $strpos);
+		}
 
-    // Numeric capture (0-9), format: <#var_name>
-    $route = preg_replace('/\<\#(.*?)\>/', '(?P<\1>[0-9]+)', $route);
+		// set Request Method if it isn't passed as a parameter
+		if($requestMethod === null) {
+			$requestMethod = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET';
+		}
 
-    // Wildcard capture (Anything INCLUDING directory separators), format: <*var_name>
-    $route = preg_replace('/\<\*(.*?)\>/', '(?P<\1>.+)', $route);
+		// Force request_order to be GP
+		// http://www.mail-archive.com/internals@lists.php.net/msg33119.html
+		$_REQUEST = array_merge($_GET, $_POST);
 
-    // Wildcard capture (Anything EXCLUDING directory separators), format: <!var_name>
-    $route = preg_replace('/\<\!(.*?)\>/', '(?P<\1>[^\/]+)', $route);
+		foreach($this->routes as $handler) {
+			list($method, $_route, $target, $name) = $handler;
 
-    // Add the regular expression syntax to make sure we do a full match or no match
-    $route = '#^' . $route . '$#';
+			$methods = explode('|', $method);
+			$method_match = false;
 
-    // Does this URL routing rule already exist in the routing table?
-    if (isset($this->routes[$priority][$route])) {
-      // Trigger a new error and exception if errors are on
-      if ($this->show_errors) {
-        throw new Exception('The URI "' . htmlspecialchars($route) . '" already exists in the router table');
-      }
+			// Check if request method matches. If not, abandon early. (CHEAP)
+			foreach($methods as $method) {
+				if (strcasecmp($requestMethod, $method) === 0) {
+					$method_match = true;
+					break;
+				}
+			}
 
-      return false;
-    }
+			// Method did not match, continue to next route.
+			if(!$method_match) continue;
 
-    // Add the route to our routing array
-    $this->routes[$priority][$route]          = $callback;
-    $this->routes_original[$priority][$route] = $original_route;
+			// Check for a wildcard (matches all)
+			if ($_route === '*') {
+				$match = true;
+			} elseif (isset($_route[0]) && $_route[0] === '@') {
+				$pattern = '`' . substr($_route, 1) . '`u';
+				$match = preg_match($pattern, $requestUrl, $params);
+			} else {
+				$route = null;
+				$regex = false;
+				$j = 0;
+				$n = isset($_route[0]) ? $_route[0] : null;
+				$i = 0;
 
-    return true;
-  }
+				// Find the longest non-regex substring and match it against the URI
+				while (true) {
+					if (!isset($_route[$i])) {
+						break;
+					} elseif (false === $regex) {
+						$c = $n;
+						$regex = $c === '[' || $c === '(' || $c === '.';
+						if (false === $regex && false !== isset($_route[$i+1])) {
+							$n = $_route[$i + 1];
+							$regex = $n === '?' || $n === '+' || $n === '*' || $n === '{';
+						}
+						if (false === $regex && $c !== '/' && (!isset($requestUrl[$j]) || $c !== $requestUrl[$j])) {
+							continue 2;
+						}
+						$j++;
+					}
+					$route .= $_route[$i++];
+				}
 
-  /**
-   * Retrieves the part of the URL after the base (Calculated from the location
-   * of the main application file, such as index.php), excluding the query
-   * string. Adds a trailing slash.
-   *
-   * <code>
-   * http://localhost/projects/test/users///view/1 would return the following,
-   * assuming that /test/ was the base directory
-   *
-   * /users/view/1/
-   * </code>
-   *
-   * @param  string $url
-   * @return string
-   */
-  protected function __get_clean_url($url)
-  {
-    // The request url might be /project/index.php, this will remove the /project part
-    $url = str_replace(dirname($_SERVER['SCRIPT_NAME']), '', $url);
+				$regex = $this->compileRoute($route);
+				$match = preg_match($regex, $requestUrl, $params);
+			}
 
-    // Remove the query string if there is one
-    $query_string = strpos($url, '?');
+			if(($match == true || $match > 0)) {
 
-    if ($query_string !== false) {
-      $url = substr($url, 0, $query_string);
-    }
+				if($params) {
+					foreach($params as $key => $value) {
+						if(is_numeric($key)) unset($params[$key]);
+					}
+				}
 
-    // If the URL looks like http://localhost/index.php/path/to/folder remove /index.php
-    if (substr($url, 1, strlen(basename($_SERVER['SCRIPT_NAME']))) == basename($_SERVER['SCRIPT_NAME'])) {
-      $url = substr($url, strlen(basename($_SERVER['SCRIPT_NAME'])) + 1);
-    }
+				return array(
+					'target' => $target,
+					'params' => $params,
+					'name' => $name
+				);
+			}
+		}
+		return false;
+	}
 
-    // Make sure the URI ends in a /
-    $url = rtrim($url, '/') . '/';
+	/**
+	 * Compile the regex for a given route (EXPENSIVE)
+	 */
+	private function compileRoute($route) {
+		if (preg_match_all('`(/|\.|)\[([^:\]]*+)(?::([^:\]]*+))?\](\?|)`', $route, $matches, PREG_SET_ORDER)) {
 
-    // Replace multiple slashes in a url, such as /my//dir/url
-    $url = preg_replace('/\/+/', '/', $url);
+			$matchTypes = $this->matchTypes;
+			foreach($matches as $match) {
+				list($block, $pre, $type, $param, $optional) = $match;
 
-    return $url;
-  }
+				if (isset($matchTypes[$type])) {
+					$type = $matchTypes[$type];
+				}
+				if ($pre === '.') {
+					$pre = '\.';
+				}
+
+				//Older versions of PCRE require the 'P' in (?P<named>)
+				$pattern = '(?:'
+						. ($pre !== '' ? $pre : null)
+						. '('
+						. ($param !== '' ? "?P<$param>" : null)
+						. $type
+						. '))'
+						. ($optional !== '' ? '?' : null);
+
+				$route = str_replace($block, $pattern, $route);
+			}
+
+		}
+		return "`^$route$`u";
+	}
 }
+return Router::instance();
