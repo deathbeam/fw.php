@@ -4,7 +4,6 @@ class Db extends Prefab {
 	private $stmt;
 	
 	public function init() {
-		if ($this->init == true) return;
 		$fw = Base::getInstance();
 		$dsn = $fw->get('DB_TYPE').':host='.$fw->get('DB_HOST').';dbname='.$fw->get('DB_NAME');
         $options = array(
@@ -12,7 +11,6 @@ class Db extends Prefab {
             PDO::ATTR_ERRMODE       => PDO::ERRMODE_EXCEPTION
         );
         $this->dbh = new PDO($dsn, $fw->get('DB_USER'), $fw->get('DB_PASS'), $options);
-		$this->init = true;
 	}
 	
 	public function query($query){

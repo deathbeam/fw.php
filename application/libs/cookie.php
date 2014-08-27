@@ -5,7 +5,6 @@ class Cookie extends Prefab {
 	private $domain = null;
 	
 	public function init() {
-		if ($this->init == true) return;
 		$fw = Base::getInstance();
 		$path = ($fw->exists('COOKIE_PATH') ? $fw->get('COOKIE_PATH') : '/');
 		$expiry = ($fw->exists('COOKIE_EXPIRY') ? $fw->get('COOKIE_EXPIRY') : 86400);
@@ -18,7 +17,6 @@ class Cookie extends Prefab {
 		$this->path = $path;
 		$this->expiry = $expiry;
 		$this->domain = $_SERVER['HTTP_HOST'];
-		$this->init = true;
 	}
 	
 	public function toArray() {

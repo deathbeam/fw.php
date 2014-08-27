@@ -1,6 +1,7 @@
 <?php
+require 'router.php';
+
 abstract class Prefab {
-	protected $init = false;
     public static function getInstance() {
         static $instance = null;
         if (null === $instance) {
@@ -9,7 +10,10 @@ abstract class Prefab {
 
         return $instance;
     }
-	abstract public function init();
+	public function toArray() {
+		return null;
+	}
+	public function init() { }
     protected function __construct() { }
     private function __clone() { }
     private function __wakeup() { }
@@ -20,19 +24,22 @@ class Base extends Prefab {
 	private $default_route = null;
 	private $fields = array();
 	private $registry = array();
+	private $router = null;
 	
 	protected function __construct() {
-		require 'autoload.php';
+		$this->router = new AltoRouter();
 	}
 	
 	public function init() {
-		if ($this->init == true) return;
+		if ($this->exists('URL')) {
+			$url=parse_url($this->get('URL'));
+			$this->router->setBasePath(substr($url['path'], 0, -1));
+		}
 		foreach($this->registry as $key => $value) $value->init();
-		$this->init = true;
 	}
 	
 	public function __set($name, $value) {
-		$this->registry[$name] = $value;
+		if (!isset($this->registry[$name])) $this->registry[$name] = require 'libs/'.$value;
 		return $this;
     }
 	
@@ -40,23 +47,30 @@ class Base extends Prefab {
 		return $this->registry[$name];
     }
 	
-	function config($file) {
-		$config = parse_ini_file($file, true);
-		if (isset($config['globals'])) {
-			foreach ($config['globals'] as $key => $value) {
-				$this->set($key, $value);
-			}
-		}
-		if (isset($config['routes'])) {
-			foreach ($config['routes'] as $key => $value) {
-				$target = preg_replace('/\s+/', '', $value);
-				$this->route($key, $target);
-			}
-		}
-	}
+	public function getRegistry() {
+		return $this->registry;
+    }
 	
 	public function toArray() {
 		return $this->fields;
+	}
+	
+	function config($file) {
+		$string = file_get_contents($file);
+		$config=json_decode($string,true);
+		if (isset($config['globals'])) {
+			foreach ($config['globals'] as $key => $value) $this->set($key, $value);
+		}
+		if (isset($config['routes'])) {
+			foreach ($config['routes'] as $key => $value) $this->route($key, preg_replace('/\s+/', '', $value));
+		}
+		if (isset($config['libs'])) {
+			foreach ($config['libs'] as $key => $value) {
+				$key = preg_replace('/\s+/', '', $key);
+				$value = preg_replace('/\s+/', '', $value);
+				$this->$key = $value;
+			}
+		}
 	}
 	
 	public function default_route($callback) {

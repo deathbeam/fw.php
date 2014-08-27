@@ -3,13 +3,11 @@ class Session extends Prefab {
 	private $name = false;
 	
 	public function init() {
-		if ($this->init == true) return;
 		$fw = Base::getInstance();
 		if ($fw->exists('SESSION_NAME')) {
 			session_name($fw->get('SESSION_NAME'));
 		}
 		session_start();
-		$this->init = true;
 	}
 	
 	public function toArray() {

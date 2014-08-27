@@ -1,6 +1,7 @@
 <?php
 
-class Router extends Prefab {
+class AltoRouter {
+
 	protected $routes = array();
 	protected $namedRoutes = array();
 	protected $basePath = '';
@@ -12,18 +13,18 @@ class Router extends Prefab {
 		'**' => '.++',
 		''   => '[^/\.]++'
 	);
-	
-	public function init() {
-		if ($this->init == true) return;
-		$fw = Base::getInstance();
-		if ($fw->exists('URL')) {
-			$url=parse_url($fw->get('URL'));
-			$dir=substr($url['path'], 0, -1);
-		} else {
-			$dir='';
-		}
-		$this->basePath = $dir;
-		$this->init = true;
+
+	/**
+	  * Create router in one call from config.
+	  *
+	  * @param array $routes
+	  * @param string $basePath
+	  * @param array $matchTypes
+	  */
+	public function __construct( $routes = array(), $basePath = '', $matchTypes = array() ) {
+		$this->addRoutes($routes);
+		$this->setBasePath($basePath);
+		$this->addMatchTypes($matchTypes);
 	}
 
 	/**
@@ -268,4 +269,3 @@ class Router extends Prefab {
 		return "`^$route$`u";
 	}
 }
-return Router::getInstance();

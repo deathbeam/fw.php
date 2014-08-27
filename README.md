@@ -67,6 +67,7 @@ $hobo->run();
 ```
 
 ## Configuration
+
 Hobo can be configured in 2 ways. First one is defining globals and second one is loading them from config file.
 
 ### Defining globals
@@ -90,21 +91,24 @@ $hobo->set('DB_PASS','mysql');
 ### Loading configuration file
 Loading configuration file is as easy as drinking beer.
 ```php
-$hobo->config('config.ini');
+$hobo->config('config.json');
 ```
-And config.ini basic configuration contents are below. If you do not want to use database, simply do not add
-configuration settings for database.
-```INI
-[globals]
-URL=http://127.0.0.1/hobomvc/
-SESSION_NAME=hobomvc
-COOKIE_PATH=/
-COOKIE_EXPIRY=31536000
-DB_TYPE=mysql
-DB_HOST=127.0.0.1
-DB_NAME=hobomvc
-DB_USER=root
-DB_PASS=mysql
+And some basic configuration example is below:
+```JSON
+{
+	"globals": {
+		"URL": "http://127.0.0.1/hobomvc/"
+	},
+	"libs": {
+		"session": "session.php",
+		"cookie": "cookie.php",
+		"db": "db.php",
+		"view": "view.php"
+	},
+	"routes": {
+		"GET /": "index",
+	}
+}
 ```
 
 ## License

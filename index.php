@@ -2,8 +2,8 @@
 // Load Hobo base
 $hobo = require('application/base.php');
 // Load configuration
-$hobo->config('config.ini');
-// Initialize libs specified in autoload.php
+$hobo->config('config.json');
+// Initialize libs
 $hobo->init();
 
 // Use $hobo->db to fetch data from database
@@ -22,7 +22,7 @@ function index($hobo, $params) {
 	$hobo->set('heading','Hello World!');
 	$hobo->set('content','This is Hello World index page using Hobo MVC Framework');
 	// Render view
-	echo $hobo->render('public/default.php');
+	echo $hobo->view->render('public/default.php');
 }
 
 function about($hobo, $params) {
@@ -33,7 +33,7 @@ function about($hobo, $params) {
 	$hobo->set('heading','About Hobo');
 	$hobo->set('content','Hobo MVC is aiming to be super simple and super intuitive MVC framework. It is inspired by 2 my personally favorite MVC frameworks, F3(fat free) framework and PHP-MVC framework, but Hobo do not have that many features as both of them. Hobo core is currently built on 3 libs, and they are router.php, session.php and view.php. Names of these libs are self-explaining.');
 	// Render view
-	echo $hobo->render('public/default.php');
+	echo $hobo->view->render('public/default.php');
 }
 
 function error($hobo, $params) {
@@ -44,7 +44,7 @@ function error($hobo, $params) {
 	$hobo->set('heading','404!');
 	$hobo->set('content','This is not the web page you are looking for.');
 	// Render view
-	echo $hobo->render('public/default.php');
+	echo $hobo->view->render('public/default.php');
 }
 
 $hobo->run();
