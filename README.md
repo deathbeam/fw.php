@@ -59,7 +59,7 @@ And now it is time to link these 2 functions to their URL routes. We will set er
 because default route is called when we will type relative URL what is not defined in routing table.
 ```php
 $hobo->route("GET /", "index");
-$hobo->default_route("error");
+$hobo->route("default", "error");
 ```
 And last line in file should always be this command what will execute Hobo router, so we will add it after all above code.
 ```php

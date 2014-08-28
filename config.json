@@ -18,6 +18,7 @@
 		"md": "Parsedown.php"
 	},
 	"routes": {
+		"default" : "error",
 		"GET /": "index",
 		"GET /about": "about"
 	}

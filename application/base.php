@@ -62,7 +62,7 @@ class Base extends Prefab {
 			foreach ($config['globals'] as $key => $value) $this->set($key, $value);
 		}
 		if (isset($config['routes'])) {
-			foreach ($config['routes'] as $key => $value) $this->route($key, preg_replace('/\s+/', '', $value));
+			foreach ($config['routes'] as $key => $value) $this->route($key, $value);
 		}
 		if (isset($config['libs'])) {
 			foreach ($config['libs'] as $key => $value) {
@@ -72,16 +72,19 @@ class Base extends Prefab {
 			}
 		}
 	}
-	
-	public function default_route($callback) {
-		$this->default_route = $callback;
-	}
   
 	public function route($pattern, $callback) {
+		$callback = preg_replace('/\s+/', '',$callback);
+		$pattern = preg_replace('/\s+/', '',$pattern);
+		if ($pattern == 'default') {
+			$this->default_route = $callback;
+			return true;
+		}
 		$arr = explode("/", $pattern, 2);
-		$method = preg_replace('/\s+/', '',$arr[0]);
-		$route = '/'.preg_replace('/\s+/', '',$arr[1]);
+		$method = $arr[0];
+		$route = '/'.$arr[1];
 		$this->router->map($method,$route,$callback);
+		return true;
 	}
 	
 	public function set($name, $value) {
