@@ -14,7 +14,8 @@
 		"session": "session.php",
 		"cookie": "cookie.php",
 		"db": "db.php",
-		"view": "view.php"
+		"view": "view.php",
+		"md": "Parsedown.php"
 	},
 	"routes": {
 		"GET /": "index",

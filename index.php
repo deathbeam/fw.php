@@ -30,10 +30,11 @@ function about($hobo, $params) {
 	$hobo->set('header','header.php');
 	$hobo->set('footer','footer.php');
 	$hobo->set('title','About &middot; HoboMVC');
-	$hobo->set('heading','About Hobo');
-	$hobo->set('content','Hobo MVC is aiming to be super simple and super intuitive MVC framework. It is inspired by 2 my personally favorite MVC frameworks, F3(fat free) framework and PHP-MVC framework, but Hobo do not have that many features as both of them. Hobo core is currently built on 3 libs, and they are router.php, session.php and view.php. Names of these libs are self-explaining.');
+	$file = file_get_contents('README.md');
+	$content = $hobo->md->text($file);
+	$hobo->set('content',$content);
 	// Render view
-	echo $hobo->view->render('public/default.php');
+	echo $hobo->view->render('public/about.php');
 }
 
 function error($hobo, $params) {
