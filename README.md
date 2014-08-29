@@ -13,35 +13,15 @@ and `base.php`. Names of these libs are self-explaining. It is easily extensible
 ## Installation
 
 ### Using GitHub
-
 First, copy this repo into a public accessible folder on your server (or to public_html folder of your FTP if you are using shared hosting).
 Common techniques are a) downloading and extracting the .zip / .tgz by hand, b) cloning the repo with git (into var/www if you are on Linux or wamp/www if you are on Windows and have Wamp installed)
-
 ```
 git clone https://github.com/deathbeam/hobomvc.git /your/public/web/folder
 ```
 
 ### Getting the repo via Composer
-
 ```
 composer create-project deathbeam/hobomvc /your/public/web/folder dev-master
-```
-
-### Configure .htaccess
-**mod_rewrite** is required for Hobo routing. Most of web hosts have it already installed, but if you are hosting Hobo by self, you need to install it.
-
-Change the .htaccess file from
-```
-RewriteBase /hobomvc/
-```
-to where you put this project, relative to the web root folder. So when you put this project into
-the web root, like directly in /var/www or /wamp/www, then the line should look like or can be commented out:
-```
-RewriteBase /
-```
-If you have put the project into a sub-folder, then put the name of the sub-folder here:
-```
-RewriteBase /sub-folder/
 ```
 
 ## A quickstart tutorial

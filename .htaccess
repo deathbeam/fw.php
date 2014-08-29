@@ -1,20 +1,26 @@
-# Necessary to prevent problems when using a route named "index" and having a root index.php
-# more here: http://httpd.apache.org/docs/2.2/content-negotiation.html
-Options -MultiViews
-
 # Activates URL rewriting (like example.com/route/to/func)
 RewriteEngine On
+
+# Necessary to prevent problems when using a route named "index" and having a root index.php
+Options -MultiViews
 
 # Disallows others to look directly into /public/ folder
 Options -Indexes
 
-# When using the script within a sub-folder, put this path here, like /mysubfolder/
-# If your app is in the root of your web folder, then leave it commented out
-RewriteBase /hobomvc/
+# Some servers require you to specify the `RewriteBase` directive
+# In such cases, it should be the path (relative to the document root)
+# containing this .htaccess file
+#
+# RewriteBase /
+
+# Prevent visitors from accesing .json configuration files
+RewriteCond %{REQUEST_URI} \.json$
+RewriteRule \.json$ - [R=404]
 
 # General rewrite rules
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-l
 
-RewriteRule ^(.+)$ index.php?url=$1 [QSA,L]
+RewriteRule .* index.php [L,QSA]
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization},L]
