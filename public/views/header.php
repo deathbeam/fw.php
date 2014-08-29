@@ -24,7 +24,8 @@
 		<div class="collapse navbar-collapse">
 			<ul class="nav navbar-nav">
 				<li><a href="<?php echo $URL;?>">Home</a></li>
-				<li><a href="<?php echo $URL;?>about">About</a></li>
+				<li><a href="<?php echo $URL;?>markdown">Markdown test</a></li>
+				<li><a href="<?php echo $URL;?>raintpl">Rain TPL test</a></li>
 			</ul>
 		</div>
 	</div>

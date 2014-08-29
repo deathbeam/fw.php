@@ -22,9 +22,9 @@ composer create-project deathbeam/hobomvc /your/public/web/folder dev-master
 ```
 
 ### Configure .htaccess
-1. mod_rewrite is required for Hobo routing. Most of web hosts have it already installed, but if you are hosting Hobo by self, you need to install it.
+**mod_rewrite** is required for Hobo routing. Most of web hosts have it already installed, but if you are hosting Hobo by self, you need to install it.
 
-2. Change the .htaccess file from
+Change the .htaccess file from
 ```
 RewriteBase /hobomvc/
 ```
@@ -46,13 +46,21 @@ Include Hobo base at start of your index.php file, right after `<?php` PHP openi
 ```php
 $hobo = require("application/base.php");
 ```
+If your Hobo installation is in sub-folder and not in root directory, we need to set URL
+```php
+$hobo->set('URL', 'http://127.0.0.1/hobomvc/');
+```
+If you set URL (or any other setting for some of extension libs), we must apply it, so place this right after global setting definitions. If you do not defined any settings, this line is not required.
+```php
+$hobo->apply();
+```
 Now we will create 2 functions what will echo simple hello world messages when called.
 ```php
 function index() {
 	echo "Hello world.";
 }
 function error() {
-	echo "404! This is not the web page you are looking for.;
+	echo "404! This is not the web page you are looking for.";
 }
 ```
 And now it is time to link these 2 functions to their URL routes. We will set error function to be default route
@@ -67,31 +75,21 @@ $hobo->run();
 ```
 
 ## Configuration
-
 Hobo can be configured in 2 ways. First one is defining globals and second one is loading them from config file.
+Add these functions right after `$hobo = require("application/base.php");`
 
 ### Defining globals
-This is basic configuration using `$hobo=>set` function. Add these functions right after `$hobo = require("application/base.php");`
-#### Configuration for: Project URL
-Put URL to your project folder here, for local development "127.0.0.1" or "localhost" (plus sub-folder) is fine
+This is basic configuration using `$hobo=>set` function. 
 ```php
 $hobo->set('URL', 'http://127.0.0.1/hobomvc/');
-```
-#### Configuration for: Database
-This is the place where you define your database credentials, database type etc. If you do not want to use database, simply do not add these
-configuration setting for database.
-```php
-$hobo->set('DB_TYPE','mysql');
-$hobo->set('DB_HOST','127.0.0.1');
-$hobo->set('DB_NAME','hobomvc');
-$hobo->set('DB_USER','root');
-$hobo->set('DB_PASS','mysql');
+$hobo->apply();
 ```
 
 ### Loading configuration file
 Loading configuration file is as easy as drinking beer.
 ```php
 $hobo->config('config.json');
+$hobo->apply();
 ```
 And some basic configuration example is below:
 ```JSON

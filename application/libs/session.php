@@ -1,11 +1,13 @@
 <?php
-class Session extends Prefab {
+return Session::getInstance();
+
+class Session extends Library {
 	private $name = false;
 	
-	public function init() {
-		$fw = Base::getInstance();
-		if ($fw->exists('SESSION_NAME')) {
-			session_name($fw->get('SESSION_NAME'));
+	public function init($hobo) {
+		$hobo = Base::getInstance();
+		if ($hobo->exists('SESSION_NAME')) {
+			session_name($hobo->get('SESSION_NAME'));
 		}
 		session_start();
 	}
@@ -41,4 +43,3 @@ class Session extends Prefab {
         return $this;
     }
 }
-return Session::getInstance();

@@ -1,13 +1,14 @@
 <?php
-class Cookie extends Prefab {
+return Cookie::getInstance();
+
+class Cookie extends Library {
 	private $expiry = null;
 	private $path = null;
 	private $domain = null;
 	
-	public function init() {
-		$fw = Base::getInstance();
-		$path = ($fw->exists('COOKIE_PATH') ? $fw->get('COOKIE_PATH') : '/');
-		$expiry = ($fw->exists('COOKIE_EXPIRY') ? $fw->get('COOKIE_EXPIRY') : 86400);
+	public function init($hobo) {
+		$path = ($hobo->exists('COOKIE_PATH') ? $hobo->get('COOKIE_PATH') : '/');
+		$expiry = ($hobo->exists('COOKIE_EXPIRY') ? $hobo->get('COOKIE_EXPIRY') : 86400);
 		if ($expiry === -1)
 			$expiry = 1893456000; // Lifetime = 2030-01-01 00:00:00
 		  elseif (is_numeric($expiry))
@@ -56,4 +57,3 @@ class Cookie extends Prefab {
         return $this;
     }
 }
-return Cookie::getInstance();

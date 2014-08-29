@@ -1,7 +1,8 @@
 <?php
-require 'router.php';
+require_once 'router.php';
+return Base::getInstance();
 
-abstract class Prefab {
+abstract class Library {
     public static function getInstance() {
         static $instance = null;
         if (null === $instance) {
@@ -13,45 +14,53 @@ abstract class Prefab {
 	public function toArray() {
 		return null;
 	}
-	public function init() { }
+	public function init($hobo) { }
     protected function __construct() { }
     private function __clone() { }
     private function __wakeup() { }
 }
 
-class Base extends Prefab {
-	private static $instance;
+class Base {
 	private $default_route = null;
 	private $fields = array();
-	private $registry = array();
+	private $libs = array();
 	private $router = null;
 	
 	protected function __construct() {
 		$this->router = new AltoRouter();
 	}
 	
-	public function init() {
+	public static function getInstance() {
+        static $instance = null;
+        if (null === $instance) {
+            $instance = new static();
+        }
+
+        return $instance;
+    }
+	
+	public function apply() {
 		if ($this->exists('URL')) {
 			$url=parse_url($this->get('URL'));
 			$this->router->setBasePath(substr($url['path'], 0, -1));
 		}
-		foreach($this->registry as $key => $value) $value->init();
+		foreach($this->libs as $key => $value) $value->init($this);
 	}
 	
 	public function __set($name, $value) {
-		if (!isset($this->registry[$name])) $this->registry[$name] = require 'libs/'.$value;
+		if (!isset($this->libs[$name])) $this->libs[$name] = include 'libs/'.$value;
 		return $this;
     }
 	
 	public function __get($name) {
-		return $this->registry[$name];
+		return $this->libs[$name];
     }
 	
-	public function getRegistry() {
-		return $this->registry;
+	public function &getLibs() {
+		return $this->libs;
     }
 	
-	public function toArray() {
+	public function &getFields() {
 		return $this->fields;
 	}
 	
@@ -114,15 +123,6 @@ class Base extends Prefab {
         return $this;
     }
 	
-	public function render($file) {
-		$session = $this->session->toArray();
-		$cookie = $this->cookie->toArray();
-		extract($this->toArray());
-        ob_start();
-		include $file;
-        return ob_get_clean();
-    }
-	
 	public function run() {
 		// Execute functions based on route match
 		$match = $this->router->match();
@@ -137,5 +137,3 @@ class Base extends Prefab {
 		call_user_func_array($callback, array('hobo' => $this, 'params' =>$params));
 	}
 }
-
-return Base::getInstance();

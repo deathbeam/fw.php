@@ -1,4 +1,5 @@
 <?php
+return Parsedown::getInstance();
 
 #
 #
@@ -13,7 +14,7 @@
 #
 #
 
-class Parsedown extends Prefab
+class Parsedown extends Library
 {
     #
     # Philosophy
@@ -1400,4 +1401,3 @@ class Parsedown extends Prefab
                           'time',
     );
 }
-return Parsedown::getInstance();

@@ -1,16 +1,17 @@
 <?php
-class Db extends Prefab {
+return Db::getInstance();
+
+class Db extends Library {
     private $dbh;
 	private $stmt;
 	
-	public function init() {
-		$fw = Base::getInstance();
-		$dsn = $fw->get('DB_TYPE').':host='.$fw->get('DB_HOST').';dbname='.$fw->get('DB_NAME');
+	public function init($hobo) {
+		$dsn = $hobo->get('DB_TYPE').':host='.$hobo->get('DB_HOST').';dbname='.$hobo->get('DB_NAME');
         $options = array(
             PDO::ATTR_PERSISTENT    => true,
             PDO::ATTR_ERRMODE       => PDO::ERRMODE_EXCEPTION
         );
-        $this->dbh = new PDO($dsn, $fw->get('DB_USER'), $fw->get('DB_PASS'), $options);
+        $this->dbh = new PDO($dsn, $hobo->get('DB_USER'), $hobo->get('DB_PASS'), $options);
 	}
 	
 	public function query($query){
@@ -61,4 +62,3 @@ class Db extends Prefab {
 		return $this->dbh->rollBack();
 	}
 }
-return Db::getInstance();
