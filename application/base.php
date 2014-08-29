@@ -1,5 +1,9 @@
 <?php
-require_once 'router.php';
+// load the (optional) Composer auto-loader
+if (file_exists('vendor/autoload.php')) {
+    require 'vendor/autoload.php';
+}
+require 'router.php';
 return Base::getInstance();
 
 abstract class Library {
