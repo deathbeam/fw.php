@@ -90,10 +90,19 @@ class Base {
 			return true;
 		}
 		$arr = explode("/", $pattern, 2);
-		$method = $arr[0];
 		$route = '/'.$arr[1];
-		$this->router->map($method,$route,$callback);
+		$name = null;
+		if (strpos($arr[0], '@') !== false) {
+			$arr = explode("@", $arr[0], 2);
+			$name = $arr[1];
+		}
+		$method = $arr[0];
+		$this->router->map($method,$route,$callback,$name);
 		return true;
+	}
+	
+	public function generate($route, $params = array()) {
+		return $this->router->generate($route, $params);
 	}
 	
 	public function set($name, $value) {
