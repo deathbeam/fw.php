@@ -1,4 +1,12 @@
-# Hobo MVC
+## Table of Contents
+
+* [About](#about)
+* [Installation](#installation)
+* [A quickstart tutorial](#a-quickstart-tutorial)
+* [Configuration](#configuration)
+* [License](#license)
+
+## About
 
 Hobo MVC is aiming to be super simple and super intuitive MVC framework. It is inspired by 2 my personally favorite MVC frameworks, F3(fat free) framework and PHP-MVC framework, but
 Hobo do not have that many features as both of them. Hobo core is currently built on 2 libs, and they are `router.php`,
