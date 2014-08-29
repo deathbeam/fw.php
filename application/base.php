@@ -3,21 +3,16 @@ require_once 'router.php';
 return Base::getInstance();
 
 abstract class Library {
-    public static function getInstance() {
-        static $instance = null;
-        if (null === $instance) {
-            $instance = new static();
-        }
-
-        return $instance;
-    }
-	public function toArray() {
-		return null;
+	public static function getInstance() {
+		static $instance = null;
+		if (null === $instance) $instance = new static();
+		return $instance;
 	}
+	
 	public function init($hobo) { }
-    protected function __construct() { }
-    private function __clone() { }
-    private function __wakeup() { }
+	protected function __construct() { }
+	private function __clone() { }
+	private function __wakeup() { }
 }
 
 class Base {
@@ -26,24 +21,24 @@ class Base {
 	private $libs = array();
 	private $router = null;
 	
-	protected function __construct() {
-		$this->router = new AltoRouter();
-	}
-	
 	public static function getInstance() {
         static $instance = null;
         if (null === $instance) {
             $instance = new static();
         }
-
         return $instance;
     }
 	
+	protected function __construct() {
+		$this->router = new AltoRouter();
+		// Set some default globals
+		$this->set('URL', 'http://'.$_SERVER['HTTP_HOST'].dirname($_SERVER['PHP_SELF']) . "/");
+		$this->set('PUBLIC_DIR', 'public/');
+	}
+	
 	public function apply() {
-		if ($this->exists('URL')) {
-			$url=parse_url($this->get('URL'));
-			$this->router->setBasePath(substr($url['path'], 0, -1));
-		}
+		$url=parse_url($this->get('URL'));
+		$this->router->setBasePath(substr($url['path'], 0, -1));
 		foreach($this->libs as $key => $value) $value->init($this);
 	}
 	
@@ -55,14 +50,6 @@ class Base {
 	public function __get($name) {
 		return $this->libs[$name];
     }
-	
-	public function &getLibs() {
-		return $this->libs;
-    }
-	
-	public function &getFields() {
-		return $this->fields;
-	}
 	
 	function config($file) {
 		$string = file_get_contents($file);
@@ -81,6 +68,13 @@ class Base {
 			}
 		}
 	}
+	
+	public function draw($file) {
+		extract($this->fields);
+        ob_start();
+		include $this->get('PUBLIC_DIR').$file;
+        echo ob_get_clean();
+    }
   
 	public function route($pattern, $callback) {
 		$callback = preg_replace('/\s+/', '',$callback);
@@ -107,33 +101,23 @@ class Base {
 	
 	public function set($name, $value) {
 		$this->fields[$name] = $value;
-        return $this;
-    }
+	}
      
     public function get($name) {
-        if (!isset($this->fields[$name])) {
-            throw new InvalidArgumentException(
-                "Unable to get the field '$name'.");
-        }
-        $field = $this->fields[$name];
-        return $field instanceof Closure ? $field($this) : $field;
-    }
-     
-    public function exists($name) {
-        return isset($this->fields[$name]);
-    }
-     
-    public function clear($name) {
-        if (!isset($this->fields[$name])) {
-            throw new InvalidArgumentException(
-                "Unable to unset the field '$field'.");
-        }
-        unset($this->fields[$name]);
-        return $this;
+		if (!isset($this->fields[$name])) throw new InvalidArgumentException("Unable to get the field '$name'.");
+		return $this->fields[$name];
+	}
+	
+	public function exists($name) {
+		return isset($this->fields[$name]);
+	}
+    
+	public function clear($name) {
+		if (!isset($this->fields[$name])) throw new InvalidArgumentException("Unable to unset the field '$field'.");
+		unset($this->fields[$name]);
     }
 	
 	public function run() {
-		// Execute functions based on route match
 		$match = $this->router->match();
 		if($match) {
 			$callback = $match['target'];

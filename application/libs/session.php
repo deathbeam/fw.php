@@ -5,15 +5,23 @@ class Session extends Library {
 	private $name = false;
 	
 	public function init($hobo) {
-		$hobo = Base::getInstance();
-		if ($hobo->exists('SESSION_NAME')) {
-			session_name($hobo->get('SESSION_NAME'));
-		}
-		session_start();
+		if (!$hobo->exists('session_config')) return;
+		$config = $hobo->get('session_config');
+		session_name($config[0]);
 	}
 	
 	public function toArray() {
 		return $_SESSION;
+	}
+	
+	public function start() {
+		return session_start();
+	}
+	
+	public function end() {
+		session_destroy();
+		session_unset();
+		setcookie(session_name(), null, 0, "/");
 	}
 	
 	public function set($name, $value) {

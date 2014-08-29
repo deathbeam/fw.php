@@ -11,7 +11,20 @@ return RainTPL::getInstance();
  */
 
 
-class RainTPL extends Library{
+class RainTPL extends Library {
+
+	public function init($hobo) {
+		if ($hobo->exists('raintpl_config')) {
+			$config = $hobo->get('raintpl_config');
+			raintpl::$tpl_dir = $hobo->get('PUBLIC_DIR'). $config[0];
+			raintpl::$cache_dir = $hobo->get('PUBLIC_DIR'). $config[1];
+			raintpl::$tpl_ext = $config[2];
+		} else {
+			raintpl::$tpl_dir = $hobo->get('PUBLIC_DIR'). raintpl::$tpl_dir;
+			raintpl::$cache_dir = $hobo->get('PUBLIC_DIR'). raintpl::$cache_dir;
+		}
+		raintpl::$path_replace = false;
+	}
 
 	// -------------------------
 	// 	CONFIGURATION
@@ -22,7 +35,7 @@ class RainTPL extends Library{
 		 *
 		 * @var string
 		 */
-		static $tpl_dir = "public/tpl/";
+		static $tpl_dir = "tpl/";
 
 
 		/**
@@ -30,7 +43,7 @@ class RainTPL extends Library{
 		 *
 		 * @var string
 		 */
-		static $cache_dir = "public/tmp/";
+		static $cache_dir = "tmp/";
 
 
 		/**
@@ -55,7 +68,7 @@ class RainTPL extends Library{
 		 *
 		 * @var unknown_type
 		 */
-		static $path_replace = false;
+		static $path_replace = true;
 
 
 		/**

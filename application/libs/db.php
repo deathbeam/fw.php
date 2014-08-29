@@ -6,12 +6,14 @@ class Db extends Library {
 	private $stmt;
 	
 	public function init($hobo) {
-		$dsn = $hobo->get('DB_TYPE').':host='.$hobo->get('DB_HOST').';dbname='.$hobo->get('DB_NAME');
+		if (!$hobo->exists('db_config')) return;
+		$config = $hobo->get('db_config');
+		$dsn = $config[0].':host='.$config[1].';dbname='.$config[2];
         $options = array(
             PDO::ATTR_PERSISTENT    => true,
             PDO::ATTR_ERRMODE       => PDO::ERRMODE_EXCEPTION
         );
-        $this->dbh = new PDO($dsn, $hobo->get('DB_USER'), $hobo->get('DB_PASS'), $options);
+        $this->dbh = new PDO($dsn, $config[3], $config[4], $options);
 	}
 	
 	public function query($query){

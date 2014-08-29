@@ -46,37 +46,21 @@ RewriteBase /sub-folder/
 
 ## A quickstart tutorial
 
-To quickly create your first hello world application in Hobo, here is step by step tutorial.
+To quickly create your first hello world application in Hobo, here is minimalistic index.php example.
 
 Include Hobo base at start of your index.php file, right after `<?php` PHP opening tag.
 ```php
 $hobo = require("application/base.php");
-```
-If your Hobo installation is in sub-folder and not in root directory, we need to set URL
-```php
-$hobo->set('URL', 'http://127.0.0.1/hobomvc/');
-```
-If you set URL (or any other setting for some of extension libs), we must apply it, so place this right after global setting definitions. If you do not defined any settings, this line is not required.
-```php
-$hobo->apply();
-```
-Now we will create 2 functions what will echo simple hello world messages when called.
-```php
+$hobo->route("GET /", "index");
+$hobo->route("default", "error");
+
 function index() {
 	echo "Hello world.";
 }
 function error() {
 	echo "404! This is not the web page you are looking for.";
 }
-```
-And now it is time to link these 2 functions to their URL routes. We will set error function to be default route
-because default route is called when we will type relative URL what is not defined in routing table.
-```php
-$hobo->route("GET /", "index");
-$hobo->route("default", "error");
-```
-And last line in file should always be this command what will execute Hobo router, so we will add it after all above code.
-```php
+
 $hobo->run();
 ```
 
@@ -131,13 +115,18 @@ The character before the colon (the 'match type') is a shortcut for one of the f
 
 ## Configuration
 Hobo can be configured in 2 ways. First one is defining globals and second one is loading them from config file.
-Add these functions right after `$hobo = require("application/base.php");`
+In examples below, we will:
+* Load database class from `libs/` folder
+* Change directory of public files from default `public/` to `new_public_dir/`
+* Set `/` route to `index` function
 
 ### Defining globals
-This is basic configuration using `$hobo=>set` function. 
+This is basic configuration from index.php. 
 ```php
-$hobo->set('URL', 'http://127.0.0.1/hobomvc/');
+$hobo->db = 'db.php';
+$hobo->set('PUBLIC_DIR', 'new_public_dir/');
 $hobo->apply();
+$hobo->route('GET /', 'index');
 ```
 
 ### Loading configuration file
@@ -150,13 +139,10 @@ And some basic configuration example is below:
 ```JSON
 {
 	"globals": {
-		"URL": "http://127.0.0.1/hobomvc/"
+		"PUBLIC_DIR": "new_public_dir/"
 	},
 	"libs": {
-		"session": "session.php",
-		"cookie": "cookie.php",
-		"db": "db.php",
-		"view": "view.php"
+		"db": "db.php"
 	},
 	"routes": {
 		"GET /": "index",
