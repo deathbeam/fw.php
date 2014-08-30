@@ -6,8 +6,9 @@ and `base.php`. Names of these libs are self-explaining. It is easily extensible
 ## Table of Contents
 * [Installation](#installation)
 * [A quickstart tutorial](#a-quickstart-tutorial)
-* [Routes](#routes)
 * [Configuration](#configuration)
+* [Views and Templates](#views-and-templates)
+* [Routes](#routes)
 * [License](#license)
 
 ## Installation
@@ -37,6 +38,80 @@ $hobo->route('GET /',
 $hobo->run();
 ```
 
+## Configuration
+Hobo can be configured in 2 ways. First one is defining globals and second one is loading them from config file.
+In examples below, we will:
+* Load cookie class from `libs/` folder
+* Change directory of public files from default `public/` to `new_public_dir/`
+* Set `/` route to `index` function
+
+### Defining globals
+This is basic configuration from index.php. 
+```php
+$hobo->set('PUBLIC_DIR', 'new_public_dir/')->apply();
+$hobo->cookie = 'cookie.php';
+$hobo->route('GET /', 'index');
+```
+
+### Loading configuration file
+Loading configuration file is as easy as drinking beer.
+```php
+$hobo->config('config.json')->apply();
+```
+And some basic configuration example is below:
+```JSON
+{
+	"globals": {
+		"PUBLIC_DIR": "new_public_dir/"
+	},
+	"libs": {
+		"cookie": "cookie.php"
+	},
+	"routes": {
+		"GET /": "index",
+	}
+}
+```
+
+## Views and Templates
+Hobo have super simple templating system using PHP as templating language.
+Drawing template is simple:
+```php
+$hobo->draw('test.php');
+```
+Templates can read global variables set by `$hobo->set` method.
+
+### Example template
+Below, we will create simple template logic.
+Code what will go into routed function in index.php
+```php
+$hobo
+	->set('header','This is example header')
+	->set('body','Content goes here')
+	->set('footer','This is example footer'))
+	->draw('default.php');
+```
+default.php template file in /public folder
+```php
+<!doctype html>
+	<head>
+		<meta charset="utf-8">
+		<title>The Default Template</title>
+	</head>
+	<body>
+		<header>
+			<h1>You are viewing the default page!</h1>
+			<?php echo $header;?>
+		</header>
+		<section>
+			<?php echo $body;?>
+		</section>
+		<footer>
+			<?php echo $footer;?>
+		</footer>
+	</body>
+</html>
+```
 ## Routes
 In Hobo we implemented very powerfull PHP router [AltoRouter](https://github.com/dannyvankooten/AltoRouter). Features
 * Dynamic routing with named parameters
@@ -87,41 +162,6 @@ The character before the colon (the 'match type') is a shortcut for one of the f
 '*'  => '.+?'
 '**' => '.++'
 ''   => '[^/\.]++'
-```
-
-## Configuration
-Hobo can be configured in 2 ways. First one is defining globals and second one is loading them from config file.
-In examples below, we will:
-* Load cookie class from `libs/` folder
-* Change directory of public files from default `public/` to `new_public_dir/`
-* Set `/` route to `index` function
-
-### Defining globals
-This is basic configuration from index.php. 
-```php
-$hobo->set('PUBLIC_DIR', 'new_public_dir/')->apply();
-$hobo->cookie = 'cookie.php';
-$hobo->route('GET /', 'index');
-```
-
-### Loading configuration file
-Loading configuration file is as easy as drinking beer.
-```php
-$hobo->config('config.json')->apply();
-```
-And some basic configuration example is below:
-```JSON
-{
-	"globals": {
-		"PUBLIC_DIR": "new_public_dir/"
-	},
-	"libs": {
-		"cookie": "cookie.php"
-	},
-	"routes": {
-		"GET /": "index",
-	}
-}
 ```
 
 ## License

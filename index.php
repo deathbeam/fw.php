@@ -6,8 +6,8 @@ $hobo->config('config.json')->apply();
 // Load example data
 $row = $hobo->db->query('SELECT FName, LName, Age, Gender FROM mytable WHERE LName = :lname')->bind(':lname', 'Slusny')->fetchRow();
 $hobo->session->start();
-$hobo->cookie->set('test','This is cookie');
 $hobo->session->set('test','This is session var');
+$hobo->cookie->set('test','This is cookie');
 
 // Here we need to pass them to global variables so we will be able to use them
 // in views later. !Important: They are not references, so when you will modifiy 

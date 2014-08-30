@@ -9,11 +9,8 @@ class Db extends Library {
 		if (!$hobo->exists('db_config')) return;
 		$config = $hobo->get('db_config');
 		$dsn = $config[0].':host='.$config[1].';dbname='.$config[2];
-        $options = array(
-            PDO::ATTR_PERSISTENT    => true,
-            PDO::ATTR_ERRMODE       => PDO::ERRMODE_EXCEPTION
-        );
-        $this->dbh = new PDO($dsn, $config[3], $config[4], $options);
+		$options = array(PDO::ATTR_PERSISTENT => true, PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION);
+		$this->dbh = new PDO($dsn, $config[3], $config[4], $options);
 	}
 	
 	public function query($query){

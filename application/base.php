@@ -25,8 +25,8 @@ class Base {
 	public static function getInstance() {
 		static $instance = null;
 		if (null === $instance) $instance = new static();
-        return $instance;
-    }
+		return $instance;
+	}
 	
 	protected function __construct() {
 		$this->router = new AltoRouter();
@@ -37,20 +37,21 @@ class Base {
 	public function __set($name, $value) {
 		if (!isset($this->libs[$name])) $this->libs[$name] = include 'libs/'.$value;
 		return $this;
-    }
+	}
 
 	public function __get($name) {
 		return $this->libs[$name];
-    }
+	}
 	
 	public function set($name, $value) {
 		$this->fields[$name] = $value;
 		return $this;
 	}
      
-    public function get($name) {
+	public function get($name) {
 		if (!isset($this->fields[$name])) throw new InvalidArgumentException("Unable to get the field '$name'.");
-		return $this->fields[$name];
+		$field = $this->fields[$name];
+		return $field instanceof Closure ? $field($this) : $field;
 	}
 	
 	public function exists($name) {
@@ -61,7 +62,7 @@ class Base {
 		if (!isset($this->fields[$name])) throw new InvalidArgumentException("Unable to unset the field '$field'.");
 		unset($this->fields[$name]);
 		return $this;
-    }
+	}
 	
 	public function apply() {
 		$url=parse_url($this->get('URL'));
@@ -80,10 +81,10 @@ class Base {
 	
 	public function draw($file) {
 		extract($this->fields);
-        ob_start();
+		ob_start();
 		include $this->get('PUBLIC_DIR').$file;
-        echo ob_get_clean();
-    }
+		echo ob_get_clean();
+	}
   
 	public function route($pattern, $callback) {
 		$pattern = preg_replace('/\s+/', '',$pattern);
