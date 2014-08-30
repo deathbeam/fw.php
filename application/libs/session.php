@@ -30,12 +30,8 @@ class Session extends Library {
     }
      
     public function get($name) {
-        if (!isset($_SESSION[$name])) {
-            throw new InvalidArgumentException(
-                "Unable to get the field '$name'.");
-        }
-        $field = $_SESSION[$name];
-        return $field instanceof Closure ? $field($this) : $field;
+        if (!isset($_SESSION[$name])) throw new InvalidArgumentException("Unable to get the field '$name'.");
+        return $_SESSION[$name];
     }
      
     public function exists($name) {
@@ -43,10 +39,7 @@ class Session extends Library {
     }
      
     public function clear($name) {
-        if (!isset($_SESSION[$name])) {
-            throw new InvalidArgumentException(
-                "Unable to unset the field '$name'.");
-        }
+        if (!isset($_SESSION[$name])) throw new InvalidArgumentException("Unable to get the field '$name'.");
         unset($_SESSION[$name]);
         return $this;
     }

@@ -1,6 +1,6 @@
 # Hobo MVC
-Hobo MVC is aiming to be super simple and super intuitive MVC framework. It is inspired by 2 my personally favorite MVC frameworks, F3(fat free) framework and PHP-MVC framework, but
-Hobo do not have that many features as both of them. Hobo core is currently built on 2 libs, and they are `router.php`,
+Hobo MVC is aiming to be super simple and super intuitive MVC framework. It is inspired by my personally favorite MVC framework, F3(fat free), but
+Hobo have only features what are barebone for MVC framework. Hobo core is currently built on 2 libs, and they are `router.php`,
 and `base.php`. Names of these libs are self-explaining. It is easily extensible (for example check `/libs` folder).
 
 ## Table of Contents
@@ -27,20 +27,13 @@ composer create-project deathbeam/hobomvc /your/public/web/folder dev-master
 ## A quickstart tutorial
 
 To quickly create your first hello world application in Hobo, here is minimalistic index.php example.
-
-Include Hobo base at start of your index.php file, right after `<?php` PHP opening tag.
 ```php
-$hobo = require("application/base.php");
-$hobo->route("GET /", "index");
-$hobo->route("default", "error");
-
-function index() {
-	echo "Hello world.";
-}
-function error() {
-	echo "404! This is not the web page you are looking for.";
-}
-
+$hobo = require('application/base.php');
+$hobo->route('GET /',
+    function() {
+        echo 'Hello, world!';
+    }
+);
 $hobo->run();
 ```
 
@@ -59,8 +52,11 @@ $hobo->route('GET /users', array('c' => 'UserController', 'a' => 'ListAction'));
 $hobo->route('GET @users_show /users/[i:id]', 'users#show');
 $hobo->route('POST @users_do /users/[i:id]/[delete|update:action]', 'usersController#doAction');
 
+// default route (404 page)
+$hobo->route('default', 'error');
+
 // reversed routing
-$hobo->generate('users_show', array('id' => 5));
+$url = $hobo->generate('users_show', array('id' => 5));
 ```
 You can use the following limits on your named parameters. AltoRouter will create the correct regexes for you.
 ```
@@ -96,24 +92,22 @@ The character before the colon (the 'match type') is a shortcut for one of the f
 ## Configuration
 Hobo can be configured in 2 ways. First one is defining globals and second one is loading them from config file.
 In examples below, we will:
-* Load database class from `libs/` folder
+* Load cookie class from `libs/` folder
 * Change directory of public files from default `public/` to `new_public_dir/`
 * Set `/` route to `index` function
 
 ### Defining globals
 This is basic configuration from index.php. 
 ```php
-$hobo->db = 'db.php';
-$hobo->set('PUBLIC_DIR', 'new_public_dir/');
-$hobo->apply();
+$hobo->set('PUBLIC_DIR', 'new_public_dir/')->apply();
+$hobo->cookie = 'cookie.php';
 $hobo->route('GET /', 'index');
 ```
 
 ### Loading configuration file
 Loading configuration file is as easy as drinking beer.
 ```php
-$hobo->config('config.json');
-$hobo->apply();
+$hobo->config('config.json')->apply();
 ```
 And some basic configuration example is below:
 ```JSON
@@ -122,7 +116,7 @@ And some basic configuration example is below:
 		"PUBLIC_DIR": "new_public_dir/"
 	},
 	"libs": {
-		"db": "db.php"
+		"cookie": "cookie.php"
 	},
 	"routes": {
 		"GET /": "index",

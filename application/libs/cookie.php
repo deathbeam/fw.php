@@ -25,23 +25,16 @@ class Cookie extends Library {
 	}
   
 	public function set($name, $value) {
-		$retval = false;
-		if (!headers_sent())
-		{
+		if (!headers_sent()) {
 		  $retval = @setcookie($name, $value, $this->expiry, $this->path, $this->domain);
-		  if ($retval)
-			$_COOKIE[$name] = $value;
+		  if ($retval) $_COOKIE[$name] = $value;
 		}
-		return $retval;
+		return $this;
     }
      
     public function get($name) {
-        if (!isset($_COOKIE[$name])) {
-            throw new InvalidArgumentException(
-                "Unable to get the field '$name'.");
-        }
-        $field = $_COOKIE[$name];
-        return $field instanceof Closure ? $field($this) : $field;
+		if (!isset($_COOKIE[$name])) throw new InvalidArgumentException("Unable to get the field '$name'.");
+        return  $_COOKIE[$name];
     }
      
     public function exists($name) {
@@ -49,10 +42,7 @@ class Cookie extends Library {
     }
      
     public function clear($name) {
-        if (!isset($_COOKIE[$name])) {
-            throw new InvalidArgumentException(
-                "Unable to unset the field '$name'.");
-        }
+        if (!isset($_COOKIE[$name])) throw new InvalidArgumentException("Unable to get the field '$name'.");
         unset($_COOKIE[$name]);
         return $this;
     }
