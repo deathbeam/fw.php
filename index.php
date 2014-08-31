@@ -46,7 +46,7 @@ function markdown($hobo, $params) {
 
 function error($hobo, $params) {
 	$hobo
-		->set('title','Page not found &middot; HoboMVC')
+		->set('title','Page not found &middot; Hobo MVC')
 		->set('heading','404!')
 		->set('content','This is not the web page you are looking for.')
 		->draw('default.php');

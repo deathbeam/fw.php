@@ -75,7 +75,7 @@ class Base {
 		$config = json_decode(file_get_contents($file),true);
 		if (isset($config['globals'])) foreach ($config['globals'] as $key => $value) $this->set($key, $value);
 		if (isset($config['routes'])) foreach ($config['routes'] as $key => $value) $this->route($key, $value);
-		if (isset($config['libs'])) foreach ($config['libs'] as $key => $value) $this->{preg_replace('/\s+/', '', $key)} = preg_replace('/\s+/', '', $value);
+		if (isset($config['libs'])) foreach ($config['libs'] as $key => $value) $this->{strtr($key,array(' '=>''))} = strtr($value,array(' '=>''));
 		return $this;
 	}
 	
@@ -87,7 +87,7 @@ class Base {
 	}
   
 	public function route($pattern, $callback) {
-		$pattern = preg_replace('/\s+/', '',$pattern);
+		$pattern = strtr($pattern,array(' '=>''));
 		if ($pattern == 'default') {
 			$this->default_route = $callback;
 			return true;
