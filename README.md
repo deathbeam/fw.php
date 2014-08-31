@@ -13,17 +13,18 @@ and `base.php`. Names of these libs are self-explaining. It is easily extensible
 
 ## Installation
 
-### Using GitHub
-First, copy this repo into a public accessible folder on your server (or to public_html folder of your FTP if you are using shared hosting).
+* copy this repo into a public accessible folder on your server (or to public_html folder of your FTP if you are using shared hosting).
+
 Common techniques are a) downloading and extracting the .zip / .tgz by hand, b) cloning the repo with git (into var/www if you are on Linux or wamp/www if you are on Windows and have Wamp installed)
 ```
 git clone https://github.com/deathbeam/hobomvc.git /your/public/web/folder
 ```
-
-### Getting the repo via Composer
+or c) getting the repo via Composer
 ```
 composer create-project deathbeam/hobomvc /your/public/web/folder dev-master
 ```
+* Now, we need to install `mod_rewrite` becouse it is required for `.htaccess` (what is heart of all MCV frameworks).
+* Now, run SQL file named `hobomvc.sql` 
 
 ## A quickstart tutorial
 
@@ -48,8 +49,8 @@ In examples below, we will:
 ### Defining globals
 This is basic configuration from index.php. 
 ```php
-$hobo->set('PUBLIC_DIR', 'new_public_dir/')->apply();
 $hobo->cookie = 'cookie.php';
+$hobo->set('PUBLIC_DIR', 'new_public_dir/')->apply();
 $hobo->route('GET /', 'index');
 ```
 

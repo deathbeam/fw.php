@@ -6,7 +6,9 @@ SET time_zone = "+00:00";
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8 */;
 
-CREATE TABLE IF NOT EXISTS `mytable` (
+CREATE DATABASE IF NOT EXISTS `hobomvc`;
+
+CREATE TABLE IF NOT EXISTS `hobomvc`.`mytable` (
   `ID` int(11) NOT NULL AUTO_INCREMENT,
   `FName` varchar(50) NOT NULL,
   `LName` varchar(50) NOT NULL,
@@ -15,7 +17,7 @@ CREATE TABLE IF NOT EXISTS `mytable` (
   PRIMARY KEY (`ID`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=11 ;
 
-INSERT INTO `mytable` (`ID`, `FName`, `LName`, `Age`, `Gender`) VALUES
+INSERT INTO `hobomvc`.`mytable` (`ID`, `FName`, `LName`, `Age`, `Gender`) VALUES
 (1, 'Thomas', 'Slusny', 18, 'male');
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
