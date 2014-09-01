@@ -6,8 +6,8 @@
 	
 	<title><?php echo $title;?></title>
 	
-	<link rel="stylesheet" href="<?php echo $URL;?>public/css/bootstrap.css">
-	<link rel="stylesheet" href="<?php echo $URL;?>public/css/style.css">
+	<link rel="stylesheet" href="css/bootstrap.css">
+	<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <div class="navbar navbar-inverse navbar-static-top" role="navigation">
@@ -23,9 +23,10 @@
 		</div>
 		<div class="collapse navbar-collapse">
 			<ul class="nav navbar-nav">
-				<li><a href="<?php echo $URL;?>">Home</a></li>
-				<li><a href="<?php echo $URL;?>markdown">Markdown test</a></li>
-				<li><a href="<?php echo $URL;?>raintpl">Rain TPL test</a></li>
+				<li><a href="">Home</a></li>
+				<li><a href="markdown">Markdown test</a></li>
+				<li><a href="templating">Templating test</a></li>
+				<li><a href="database">Database test</a></li>
 			</ul>
 		</div>
 	</div>

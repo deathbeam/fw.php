@@ -1,7 +1,6 @@
 # Hobo MVC
 Hobo MVC is aiming to be super simple and super intuitive MVC framework. It is inspired by my personally favorite MVC framework, F3(fat free), but
-Hobo have only features what are barebone for MVC framework. Hobo core is currently built on 2 libs, and they are `router.php`,
-and `base.php`. Names of these libs are self-explaining. It is easily extensible (for example check `/libs` folder).
+Hobo have only features what are barebone for MVC framework. Hobo core is built only on single php file.
 
 ## Table of Contents
 * [Installation](#installation)
@@ -42,7 +41,7 @@ $hobo->run();
 ## Configuration
 Hobo can be configured in 2 ways. First one is defining globals and second one is loading them from config file.
 In examples below, we will:
-* Load cookie class from `libs/` folder
+* Load `cookie.php` extension from `libs/` folder
 * Change directory of public files from default `public/` to `new_public_dir/`
 * Set `/` route to `index` function
 
@@ -50,7 +49,8 @@ In examples below, we will:
 This is basic configuration from index.php. 
 ```php
 $hobo->cookie = 'cookie.php';
-$hobo->set('PUBLIC_DIR', 'new_public_dir/')->apply();
+$hobo->set('PUBLIC_DIR', 'new_public_dir/');
+$hobo->apply();
 $hobo->route('GET /', 'index');
 ```
 
@@ -150,7 +150,6 @@ You can use the following limits on your named parameters. AltoRouter will creat
 ```
 Some more complicated examples
 ```
-@/(?[A-Za-z]{2}_[A-Za-z]{2})$ // custom regex, matches language codes like "en_us" etc.
 /posts/[*:title][i:id]        // Matches "/posts/this-is-a-title-123"
 /output.[xml|json:format]?    // Matches "/output", "output.xml", "output.json"
 /[:controller]?/[:action]?    // Matches the typical /controller/action 

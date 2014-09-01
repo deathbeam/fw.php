@@ -15,8 +15,9 @@
 	},
 	"routes": {
 		"default" : "error",
-		"GET @home /": "index",
+		"GET /": "index",
 		"GET /markdown": "markdown",
-		"GET /raintpl": "raintpl"
+		"GET /database": "database",
+		"GET /templating": "raintpl"
 	}
 }
