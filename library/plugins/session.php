@@ -1,7 +1,7 @@
 <?php
 return Session::getInstance();
 
-class Session extends Library {
+class Session extends Plugin {
 	private $name = false;
 	
 	public function init($hobo) {

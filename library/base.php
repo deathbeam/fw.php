@@ -2,7 +2,7 @@
 if (file_exists('../vendor/autoload.php')) require '../vendor/autoload.php';
 return Base::getInstance();
 
-abstract class Library {
+abstract class Plugin {
 	public static function getInstance() {
 		static $instance = null;
 		if (null === $instance) $instance = new static();
@@ -17,10 +17,8 @@ abstract class Library {
 
 class Base {
 	protected $stack = array();
-	protected $libs = array();
-	protected $default_route = null;
+	protected $plugins = array();
 	protected $routes = array();
-	protected $namedRoutes = array();
 	
 	public static function getInstance() {
 		static $instance = null;
@@ -29,26 +27,31 @@ class Base {
 	}
 	
 	protected function __construct() {
-		$this->set('URL', 'http://'.$_SERVER['HTTP_HOST'].dirname($_SERVER['PHP_SELF']) . "/");
-		$this->set('PUBLIC_DIR', 'public/');
-		$this->set('TIME', microtime(TRUE));
-		$this->set('MATCH_TYPES', array(
-			'i'  => '[0-9]++',
-			'a'  => '[0-9A-Za-z]++',
-			'h'  => '[0-9A-Fa-f]++',
-			'*'  => '.+?',
-			'**' => '.++',
-			''   => '[^/\.]++'
-		));
+		$this->stack = array (
+			'TIME' => microtime(TRUE),
+			'URL' => 'http://'.$_SERVER['HTTP_HOST'].dirname($_SERVER['PHP_SELF']) . '/',
+			'PUBLIC_DIR' => 'public/',
+			'PLUGIN_DIR' => 'plugins/',
+			'DEFAULT_ROUTE' => function() { echo '<b>404!</b> Page not found.'; },
+			'MATCH_TYPES' => array(
+				'i'  => '[0-9]++',
+				'a'  => '[0-9A-Za-z]++',
+				'h'  => '[0-9A-Fa-f]++',
+				'*'  => '.+?',
+				'**' => '.++',
+				''   => '[^/\.]++'
+			)
+		);
 	}
 	
 	public function __set($name, $value) {
-		if (!isset($this->libs[$name])) $this->libs[$name] = include 'libs/'.$value;
+		if (!isset($this->plugins[$name])) $this->plugins[$name] = include $this->stack['PLUGIN_DIR'].$value;
 		return $this;
 	}
 
 	public function __get($name) {
-		return $this->libs[$name];
+		if (!isset($this->plugins[$name])) throw new InvalidArgumentException("Unable to get the plugin '$name'.");
+		return $this->plugins[$name];
 	}
 	
 	public function set($name, $value) {
@@ -58,8 +61,7 @@ class Base {
      
 	public function get($name) {
 		if (!isset($this->stack[$name])) throw new InvalidArgumentException("Unable to get the field '$name'.");
-		$field = $this->stack[$name];
-		return $field instanceof Closure ? $field($this) : $field;
+		return $this->stack[$name];
 	}
 	
 	public function exists($name) {
@@ -77,7 +79,7 @@ class Base {
 	}
 	
 	public function apply() {
-		foreach($this->libs as $key => $value) $value->init($this);
+		foreach($this->plugins as $key => $value) $value->init($this);
 		return $this;
 	}
 
@@ -85,16 +87,16 @@ class Base {
 		$config = json_decode(file_get_contents($file),true);
 		if (isset($config['globals'])) foreach ($config['globals'] as $key => $value) $this->set($key, $value);
 		if (isset($config['routes'])) foreach ($config['routes'] as $key => $value) $this->route($key, $value);
-		if (isset($config['libs'])) foreach ($config['libs'] as $key => $value) $this->{strtr($key,array(' '=>''))} = strtr($value,array(' '=>''));
+		if (isset($config['plugins'])) foreach ($config['plugins'] as $key => $value) $this->{strtr($key,array(' '=>''))} = strtr($value,array(' '=>''));
 		return $this;
 	}
 	
 	public function draw($file) {
 		extract($this->stack);
 		ob_start();
-		include $this->get('PUBLIC_DIR').$file;
+		include $this->stack['PUBLIC_DIR'].$file;
 		$html = ob_get_clean();
-		$path = $this->get('URL').$this->get('PUBLIC_DIR');
+		$path = $this->stack['URL'].$this->stack['PUBLIC_DIR'];
 		echo preg_replace(
 			array(
 				'/<img(.*?)src=(?:")(http|https)\:\/\/([^"]+?)(?:")/i','/<img(.*?)src=(?:")([^"]+?)#(?:")/i','/<img(.*?)src="(.*?)"/', '/<img(.*?)src=(?:\@)([^"]+?)(?:\@)/i',
@@ -112,12 +114,13 @@ class Base {
 		$pattern = strtr($pattern,array(' '=>''));
 		
 		if ($pattern == 'default') {
-			$this->default_route = $callback;
+			$this->stack['DEFAULT_ROUTE'] = $callback;
 			return $this;
 		}
 		
 		$arr = explode("/", $pattern, 2);
 		$route = '/'.$arr[1];
+		$name = null;
 		
 		if (strpos($arr[0], '@') !== false) {
 			$arr = explode("@", $arr[0], 2);
@@ -125,23 +128,21 @@ class Base {
 		}
 		
 		$method = $arr[0];
-		$this->routes[] = array($method, $route, $callback);
-		
-		if(isset($name)) {
-			if(isset($this->namedRoutes[$name])) {
-				throw new Exception("Can not redeclare route '{$name}'");
-			} else {
-				$this->namedRoutes[$name] = $route;
-			}
-		}
+		$this->routes[] = array($method, $route, $callback , $name);
 		
 		return $this;
 	}
 	
 	public function generate($routeName, array $params = array()) {
-		if(!isset($this->namedRoutes[$routeName])) {throw new InvalidArgumentException("Route '{$routeName}' does not exist.");}
-		$route = $this->namedRoutes[$routeName];
-		$url = substr(parse_url($this->get('URL'))['path'], 0, -1).$route;
+		foreach ($this->routes as $route) {
+			list($method, $_route, $callback, $name) = $route;
+			if (isset($name) and $name == $routeName) { 
+				$route = $_route;
+				break;
+			}
+		}
+		if(!isset($route)) throw new InvalidArgumentException("Route '{$routeName}' does not exist.");
+		$url = substr($this->stack['URL'], 0, -1).$route;
 
 		if (preg_match_all('`(/|\.|)\[([^:\]]*+)(?::([^:\]]*+))?\](\?|)`', $route, $matches, PREG_SET_ORDER)) {
 			foreach($matches as $match) {
@@ -163,7 +164,7 @@ class Base {
 		$match = false;
 
 		$requestUrl = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
-		$requestUrl = substr($requestUrl, strlen(substr(parse_url($this->get('URL'))['path'], 0, -1)));
+		$requestUrl = substr($requestUrl, strlen(substr(parse_url($this->stack['URL'])['path'], 0, -1)));
 
 		if (($strpos = strpos($requestUrl, '?')) !== false) $requestUrl = substr($requestUrl, 0, $strpos);
 
@@ -217,7 +218,7 @@ class Base {
 				if (preg_match_all('`(/|\.|)\[([^:\]]*+)(?::([^:\]]*+))?\](\?|)`', $route, $matches, PREG_SET_ORDER)) {
 					foreach($matches as $match) {
 						list($block, $pre, $type, $param, $optional) = $match;
-						if (isset($this->get('MATCH_TYPES')[$type])) $type = $this->get('MATCH_TYPES')[$type];
+						if (isset($this->stack['MATCH_TYPES'][$type])) $type = $this->stack['MATCH_TYPES'][$type];
 						if ($pre === '.') $pre = '\.';
 
 						$route = str_replace($block,'(?:'.($pre !== '' ? $pre : null).'('.($param !== '' ? "?P<$param>" : null).$type.'))'.($optional !== '' ? '?' : null),$route);
@@ -238,6 +239,6 @@ class Base {
 				return;
 			}
 		}
-		call_user_func_array($this->default_route, array('hobo' => $this, 'params' => array()));
+		call_user_func_array($this->stack['DEFAULT_ROUTE'], array('hobo' => $this, 'params' => array()));
 	}
 }

@@ -1,5 +1,5 @@
 <?php
-$hobo = require('application/base.php');
+$hobo = require('library/base.php');
 $hobo->config('config.json')->apply();
 
 function index($hobo, $params) {
@@ -42,14 +42,6 @@ function markdown($hobo, $params) {
 		->set('heading','Markdown test using <a href="http://www.parsedown.org/">Parsedown</a>')
 		->set('content',$hobo->md->text(file_get_contents('README.md')))
 		->draw('default.php');
-}
-
-function raintpl($hobo, $params) {
-	$hobo->rain->assign('URL',$hobo->get('URL'));
-	$hobo->rain->assign('title','Rain TPL test &middot; Hobo MVC');
-	$hobo->rain->assign('heading','Templating test using <a href="http://www.raintpl.com/">Rain TPL</a>');
-	$hobo->rain->assign('content','This page was loaded using Rain TPL template engine extension');
-	$hobo->rain->draw('default');
 }
 
 $hobo->run();

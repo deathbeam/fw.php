@@ -1,7 +1,7 @@
 <?php
 return Cookie::getInstance();
 
-class Cookie extends Library {
+class Cookie extends Plugin {
 	private $expiry = null;
 	private $path = null;
 	private $domain = null;

@@ -84,7 +84,7 @@ Templates can read global variables set by `$hobo->set` method.
 
 ### Example template
 Below, we will create simple template logic.
-Code what will go into routed function in index.php
+Code what will go into routed function in `index.php`
 ```php
 $hobo
 	->set('header','This is example header')
@@ -92,7 +92,7 @@ $hobo
 	->set('footer','This is example footer'))
 	->draw('default.php');
 ```
-default.php template file in /public folder
+We will save code below as `default.php` to `/public` directory
 ```php
 <!doctype html>
 	<head>

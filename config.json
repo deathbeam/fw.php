@@ -1,23 +1,20 @@
 {
 	"globals": {
 		"PUBLIC_DIR": "public/",
-		"raintpl_config" : ["tpl/","cache/","html"],
 		"session_config" : ["hobomvc"],
 		"cookie_config": ["/","31536000"],
 		"db_config": ["mysql","127.0.0.1","hobomvc","root",""]
 	},
-	"libs": {
+	"plugins": {
 		"session": "session.php",
 		"cookie": "cookie.php",
 		"db": "db.php",
-		"rain": "rain.tpl.php",
 		"md": "parsedown.php"
 	},
 	"routes": {
 		"default" : "error",
 		"GET /": "index",
 		"GET /markdown": "markdown",
-		"GET /database": "database",
-		"GET /templating": "raintpl"
+		"GET /database": "database"
 	}
 }

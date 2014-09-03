@@ -25,7 +25,6 @@
 			<ul class="nav navbar-nav">
 				<li><a href="<?php echo $URL;?>">Home</a></li>
 				<li><a href="<?php echo $URL;?>markdown">Markdown test</a></li>
-				<li><a href="<?php echo $URL;?>templating">Templating test</a></li>
 				<li><a href="<?php echo $URL;?>database">Database test</a></li>
 			</ul>
 		</div>

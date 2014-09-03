@@ -14,7 +14,7 @@ return Parsedown::getInstance();
 #
 #
 
-class Parsedown extends Library
+class Parsedown extends Plugin
 {
     #
     # Philosophy

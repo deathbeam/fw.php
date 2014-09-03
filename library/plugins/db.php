@@ -1,7 +1,7 @@
 <?php
 return Db::getInstance();
 
-class Db extends Library {
+class Db extends Plugin {
     private $dbh;
 	private $stmt;
 	
