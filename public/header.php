@@ -23,10 +23,10 @@
 		</div>
 		<div class="collapse navbar-collapse">
 			<ul class="nav navbar-nav">
-				<li><a href="">Home</a></li>
-				<li><a href="markdown">Markdown test</a></li>
-				<li><a href="templating">Templating test</a></li>
-				<li><a href="database">Database test</a></li>
+				<li><a href="<?php echo $URL;?>">Home</a></li>
+				<li><a href="<?php echo $URL;?>markdown">Markdown test</a></li>
+				<li><a href="<?php echo $URL;?>templating">Templating test</a></li>
+				<li><a href="<?php echo $URL;?>database">Database test</a></li>
 			</ul>
 		</div>
 	</div>

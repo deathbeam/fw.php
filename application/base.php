@@ -16,19 +16,11 @@ abstract class Library {
 }
 
 class Base {
-	protected $default_route = null;
-	protected $fields = array();
+	protected $stack = array();
 	protected $libs = array();
+	protected $default_route = null;
 	protected $routes = array();
 	protected $namedRoutes = array();
-	protected $matchTypes = array(
-		'i'  => '[0-9]++',
-		'a'  => '[0-9A-Za-z]++',
-		'h'  => '[0-9A-Fa-f]++',
-		'*'  => '.+?',
-		'**' => '.++',
-		''   => '[^/\.]++'
-	);
 	
 	public static function getInstance() {
 		static $instance = null;
@@ -39,6 +31,15 @@ class Base {
 	protected function __construct() {
 		$this->set('URL', 'http://'.$_SERVER['HTTP_HOST'].dirname($_SERVER['PHP_SELF']) . "/");
 		$this->set('PUBLIC_DIR', 'public/');
+		$this->set('TIME', microtime(TRUE));
+		$this->set('MATCH_TYPES', array(
+			'i'  => '[0-9]++',
+			'a'  => '[0-9A-Za-z]++',
+			'h'  => '[0-9A-Fa-f]++',
+			'*'  => '.+?',
+			'**' => '.++',
+			''   => '[^/\.]++'
+		));
 	}
 	
 	public function __set($name, $value) {
@@ -51,24 +52,28 @@ class Base {
 	}
 	
 	public function set($name, $value) {
-		$this->fields[$name] = $value;
+		$this->stack[$name] = $value;
 		return $this;
 	}
      
 	public function get($name) {
-		if (!isset($this->fields[$name])) throw new InvalidArgumentException("Unable to get the field '$name'.");
-		$field = $this->fields[$name];
+		if (!isset($this->stack[$name])) throw new InvalidArgumentException("Unable to get the field '$name'.");
+		$field = $this->stack[$name];
 		return $field instanceof Closure ? $field($this) : $field;
 	}
 	
 	public function exists($name) {
-		return isset($this->fields[$name]);
+		return isset($this->stack[$name]);
 	}
     
 	public function clear($name) {
-		if (!isset($this->fields[$name])) throw new InvalidArgumentException("Unable to unset the field '$field'.");
-		unset($this->fields[$name]);
+		if (!isset($this->stack[$name])) throw new InvalidArgumentException("Unable to unset the field '$field'.");
+		unset($this->stack[$name]);
 		return $this;
+	}
+	
+	public function stack() {
+		return $this->stack;
 	}
 	
 	public function apply() {
@@ -85,24 +90,22 @@ class Base {
 	}
 	
 	public function draw($file) {
-		extract($this->fields);
+		extract($this->stack);
 		ob_start();
 		include $this->get('PUBLIC_DIR').$file;
+		$html = ob_get_clean();
+		$path = $this->get('URL').$this->get('PUBLIC_DIR');
 		echo preg_replace(
 			array(
 				'/<img(.*?)src=(?:")(http|https)\:\/\/([^"]+?)(?:")/i','/<img(.*?)src=(?:")([^"]+?)#(?:")/i','/<img(.*?)src="(.*?)"/', '/<img(.*?)src=(?:\@)([^"]+?)(?:\@)/i',
 				'/<script(.*?)src=(?:")(http|https)\:\/\/([^"]+?)(?:")/i','/<script(.*?)src=(?:")([^"]+?)#(?:")/i','/<script(.*?)src="(.*?)"/','/<script(.*?)src=(?:\@)([^"]+?)(?:\@)/i',
-				'/<link(.*?)href=(?:")(http|https)\:\/\/([^"]+?)(?:")/i','/<link(.*?)href=(?:")([^"]+?)#(?:")/i','/<link(.*?)href="(.*?)"/','/<link(.*?)href=(?:\@)([^"]+?)(?:\@)/i',
-				'/<a(.*?)href=(?:")(http\:\/\/|https\:\/\/|javascript:)([^"]+?)(?:")/i', '/<a(.*?)href="(.*?)"/', '/<a(.*?)href=(?:\@)([^"]+?)(?:\@)/i',
-				'/<input(.*?)src=(?:")(http|https)\:\/\/([^"]+?)(?:")/i', '/<input(.*?)src=(?:")([^"]+?)#(?:")/i', '/<input(.*?)src="(.*?)"/', '/<input(.*?)src=(?:\@)([^"]+?)(?:\@)/i'
+				'/<link(.*?)href=(?:")(http|https)\:\/\/([^"]+?)(?:")/i','/<link(.*?)href=(?:")([^"]+?)#(?:")/i','/<link(.*?)href="(.*?)"/','/<link(.*?)href=(?:\@)([^"]+?)(?:\@)/i'
 			), 
 			array(
-				'<img$1src=@$2://$3@', '<img$1src=@$2@', '<img$1src="' . $this->get('URL').$this->get('PUBLIC_DIR') . '$2"', '<img$1src="$2"',
-				'<script$1src=@$2://$3@', '<script$1src=@$2@', '<script$1src="' . $this->get('URL').$this->get('PUBLIC_DIR') . '$2"', '<script$1src="$2"',
-				'<link$1href=@$2://$3@', '<link$1href=@$2@' , '<link$1href="' . $this->get('URL').$this->get('PUBLIC_DIR') . '$2"', '<link$1href="$2"',
-				'<a$1href=@$2$3@', '<a$1href="' . $this->get('URL') . '$2"', '<a$1href="$2"',
-				'<input$1src=@$2://$3@', '<input$1src=@$2@', '<input$1src="' . $this->get('URL') . '$2"', '<input$1src="$2"'
-			), ob_get_clean());
+				'<img$1src=@$2://$3@', '<img$1src=@$2@', '<img$1src="' . $path . '$2"', '<img$1src="$2"',
+				'<script$1src=@$2://$3@', '<script$1src=@$2@', '<script$1src="' . $path . '$2"', '<script$1src="$2"',
+				'<link$1href=@$2://$3@', '<link$1href=@$2@' , '<link$1href="' . $path . '$2"', '<link$1href="$2"'
+			), $html);
 	}
   
 	public function route($pattern, $callback) {
@@ -115,7 +118,6 @@ class Base {
 		
 		$arr = explode("/", $pattern, 2);
 		$route = '/'.$arr[1];
-		$name = null;
 		
 		if (strpos($arr[0], '@') !== false) {
 			$arr = explode("@", $arr[0], 2);
@@ -123,9 +125,9 @@ class Base {
 		}
 		
 		$method = $arr[0];
-		$this->routes[] = array($method, $route, $callback, $name);
+		$this->routes[] = array($method, $route, $callback);
 		
-		if($name) {
+		if(isset($name)) {
 			if(isset($this->namedRoutes[$name])) {
 				throw new Exception("Can not redeclare route '{$name}'");
 			} else {
@@ -145,7 +147,6 @@ class Base {
 			foreach($matches as $match) {
 				list($block, $pre, $type, $param, $optional) = $match;
 				if ($pre) $block = substr($block, 1);
-
 				if(isset($params[$param])) {
 					$url = str_replace($block, $params[$param], $url);
 				} elseif ($optional) {
@@ -170,8 +171,7 @@ class Base {
 		$_REQUEST = array_merge($_GET, $_POST);
 
 		foreach($this->routes as $handler) {
-			list($method, $_route, $target, $name) = $handler;
-
+			list($method, $_route, $target) = $handler;
 			$methods = explode('|', $method);
 			$method_match = false;
 			
@@ -217,13 +217,10 @@ class Base {
 				if (preg_match_all('`(/|\.|)\[([^:\]]*+)(?::([^:\]]*+))?\](\?|)`', $route, $matches, PREG_SET_ORDER)) {
 					foreach($matches as $match) {
 						list($block, $pre, $type, $param, $optional) = $match;
-						if (isset($matchTypes[$type])) $type = $this->matchTypes[$type];
+						if (isset($this->get('MATCH_TYPES')[$type])) $type = $this->get('MATCH_TYPES')[$type];
 						if ($pre === '.') $pre = '\.';
 
-						$route = str_replace(
-							$block,
-							'(?:'.($pre !== '' ? $pre : null).'('.($param !== '' ? "?P<$param>" : null).$type.'))'.($optional !== '' ? '?' : null),
-							$route);
+						$route = str_replace($block,'(?:'.($pre !== '' ? $pre : null).'('.($param !== '' ? "?P<$param>" : null).$type.'))'.($optional !== '' ? '?' : null),$route);
 					}
 				}
 				
