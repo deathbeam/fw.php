@@ -6,9 +6,9 @@ class Cookie extends Plugin {
 	private $path = null;
 	private $domain = null;
 	
-	public function init($hobo) {
-		$path = ($hobo->exists('COOKIE_PATH') ? $hobo->get('COOKIE_PATH') : '/');
-		$expiry = ($hobo->exists('COOKIE_EXPIRY') ? $hobo->get('COOKIE_EXPIRY') : 86400);
+	public function init($less) {
+		$path = ($less->exists('COOKIE_PATH') ? $less->get('COOKIE_PATH') : '/');
+		$expiry = ($less->exists('COOKIE_EXPIRY') ? $less->get('COOKIE_EXPIRY') : 86400);
 		if ($expiry === -1)
 			$expiry = 1893456000; // Lifetime = 2030-01-01 00:00:00
 		  elseif (is_numeric($expiry))

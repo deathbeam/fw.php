@@ -4,9 +4,9 @@ return Session::getInstance();
 class Session extends Plugin {
 	private $name = false;
 	
-	public function init($hobo) {
-		if (!$hobo->exists('session_config')) return;
-		$config = $hobo->get('session_config');
+	public function init($less) {
+		if (!$less->exists('session_config')) return;
+		$config = $less->get('session_config');
 		session_name($config[0]);
 	}
 	

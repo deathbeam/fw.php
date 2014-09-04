@@ -1,6 +1,5 @@
-# Hobo MVC
-Hobo MVC is aiming to be super simple and super intuitive MVC framework. It is inspired by my personally favorite MVC framework, F3(fat free), but
-Hobo have only features what are barebone for MVC framework. Hobo core is built only on single php file.
+`less.php` is aiming to be super simple and super intuitive framework. It is inspired by my personally favorite framework, F3(fat free), but
+`less.php` have only features what are barebone for MVC framework. `less.php` core is built only on single php file.
 
 ## Table of Contents
 * [Installation](#installation)
@@ -16,48 +15,47 @@ Hobo have only features what are barebone for MVC framework. Hobo core is built 
 
 Common techniques are a) downloading and extracting the .zip / .tgz by hand, b) cloning the repo with git (into var/www if you are on Linux or wamp/www if you are on Windows and have Wamp installed)
 ```
-git clone https://github.com/deathbeam/hobomvc.git /your/public/web/folder
+git clone https://github.com/deathbeam/lessphp.git /your/public/web/folder
 ```
 or c) getting the repo via Composer
 ```
-composer create-project deathbeam/hobomvc /your/public/web/folder dev-master
+composer create-project deathbeam/lessphp /your/public/web/folder dev-master
 ```
 * Now, we need to install `mod_rewrite` becouse it is required for `.htaccess` (what is heart of all MCV frameworks).
-* Now, run SQL file named `hobomvc.sql` 
 
 ## A quickstart tutorial
 
-To quickly create your first hello world application in Hobo, here is minimalistic index.php example.
+To quickly create your first hello world application, here is minimalistic index.php example.
 ```php
-$hobo = require('application/base.php');
-$hobo->route('GET /',
+$less = require('path/to/less.php');
+$less->route('GET /',
     function() {
         echo 'Hello, world!';
     }
 );
-$hobo->run();
+$less->run();
 ```
 
 ## Configuration
-Hobo can be configured in 2 ways. First one is defining globals and second one is loading them from config file.
+`less.php` can be configured in 2 ways. First one is defining globals and second one is loading them from config file.
 In examples below, we will:
-* Load `cookie.php` extension from `libs/` folder
+* Load `cookie.php` extension from `plugins/` folder
 * Change directory of public files from default `public/` to `new_public_dir/`
 * Set `/` route to `index` function
 
 ### Defining globals
 This is basic configuration from index.php. 
 ```php
-$hobo->cookie = 'cookie.php';
-$hobo->set('PUBLIC_DIR', 'new_public_dir/');
-$hobo->apply();
-$hobo->route('GET /', 'index');
+$less->cookie = 'cookie.php';
+$less->set('PUBLIC_DIR', 'new_public_dir/');
+$less->apply();
+$less->route('GET /', 'index');
 ```
 
 ### Loading configuration file
 Loading configuration file is as easy as drinking beer.
 ```php
-$hobo->config('config.json')->apply();
+$less->config('config.json')->apply();
 ```
 And some basic configuration example is below:
 ```JSON
@@ -75,18 +73,18 @@ And some basic configuration example is below:
 ```
 
 ## Views and Templates
-Hobo have super simple templating system using PHP as templating language.
+`less.php` have super simple templating system using PHP as templating language.
 Drawing template is simple:
 ```php
-$hobo->draw('test.php');
+$less->draw('test.php');
 ```
-Templates can read global variables set by `$hobo->set` method.
+Templates can read global variables set by `$less->set` method.
 
 ### Example template
 Below, we will create simple template logic.
 Code what will go into routed function in `index.php`
 ```php
-$hobo
+$less
 	->set('header','This is example header')
 	->set('body','Content goes here')
 	->set('footer','This is example footer'))
@@ -114,7 +112,7 @@ We will save code below as `default.php` to `/public` directory
 </html>
 ```
 ## Routes
-In Hobo we implemented very powerfull PHP router [AltoRouter](https://github.com/dannyvankooten/AltoRouter). Features
+In `less.php` we implemented very powerfull PHP router [AltoRouter](https://github.com/dannyvankooten/AltoRouter). Features
 * Dynamic routing with named parameters
 * Reversed routing
 * Flexible regular expression routing
@@ -123,16 +121,19 @@ In Hobo we implemented very powerfull PHP router [AltoRouter](https://github.com
 ### Example routing
 ```php
 // mapping routes
-$hobo->route('GET|POST @home /', 'home#index');
-$hobo->route('GET /users', array('c' => 'UserController', 'a' => 'ListAction'));
-$hobo->route('GET @users_show /users/[i:id]', 'users#show');
-$hobo->route('POST @users_do /users/[i:id]/[delete|update:action]', 'usersController#doAction');
+$less->route('GET|POST @home /', 'home#index');
+$less->route('GET /users', array('c' => 'UserController', 'a' => 'ListAction'));
+$less->route('GET @users_show /users/[i:id]', 'users#show');
+$less->route('POST @users_do /users/[i:id]/[delete|update:action]', 'usersController#doAction');
+
+// provide ReST interface by mapping HTTP verb to class method
+$less->map('/rest', 'some_random_class');
 
 // default route (404 page)
-$hobo->route('default', 'error');
+$less->route('default', 'error');
 
 // reversed routing
-$url = $hobo->generate('users_show', array('id' => 5));
+$url = $less->generate('users_show', array('id' => 5));
 ```
 You can use the following limits on your named parameters. AltoRouter will create the correct regexes for you.
 ```

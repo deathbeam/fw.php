@@ -5,9 +5,9 @@ class Db extends Plugin {
     private $dbh;
 	private $stmt;
 	
-	public function init($hobo) {
-		if (!$hobo->exists('db_config')) return;
-		$config = $hobo->get('db_config');
+	public function init($less) {
+		if (!$less->exists('db_config')) return;
+		$config = $less->get('db_config');
 		$dsn = $config[0].':host='.$config[1].';dbname='.$config[2];
 		$options = array(PDO::ATTR_PERSISTENT => true, PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION);
 		$this->dbh = new PDO($dsn, $config[3], $config[4], $options);

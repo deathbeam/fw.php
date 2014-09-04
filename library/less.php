@@ -1,5 +1,4 @@
 <?php
-if (file_exists('../vendor/autoload.php')) require '../vendor/autoload.php';
 return Base::getInstance();
 
 abstract class Plugin {
@@ -9,7 +8,7 @@ abstract class Plugin {
 		return $instance;
 	}
 	
-	public function init($hobo) { }
+	public function init($less) { }
 	protected function __construct() { }
 	private function __clone() { }
 	private function __wakeup() { }
@@ -33,6 +32,7 @@ class Base {
 			'PUBLIC_DIR' => 'public/',
 			'PLUGIN_DIR' => 'plugins/',
 			'DEFAULT_ROUTE' => function() { echo '<b>404!</b> Page not found.'; },
+			'HTTP_TYPES' => 'GET|POST|PATCH|PUT|DELETE',
 			'MATCH_TYPES' => array(
 				'i'  => '[0-9]++',
 				'a'  => '[0-9A-Za-z]++',
@@ -74,7 +74,7 @@ class Base {
 		return $this;
 	}
 	
-	public function stack() {
+	public function toArray() {
 		return $this->stack;
 	}
 	
@@ -87,6 +87,7 @@ class Base {
 		$config = json_decode(file_get_contents($file),true);
 		if (isset($config['globals'])) foreach ($config['globals'] as $key => $value) $this->set($key, $value);
 		if (isset($config['routes'])) foreach ($config['routes'] as $key => $value) $this->route($key, $value);
+		if (isset($config['maps'])) foreach ($config['maps'] as $key => $value) $this->map($key, $value);
 		if (isset($config['plugins'])) foreach ($config['plugins'] as $key => $value) $this->{strtr($key,array(' '=>''))} = strtr($value,array(' '=>''));
 		return $this;
 	}
@@ -131,6 +132,11 @@ class Base {
 		$this->routes[] = array($method, $route, $callback , $name);
 		
 		return $this;
+	}
+	
+	function map($url, $class) {
+		$methods = explode('|', $this->stack('HTTP_TYPES'));
+		foreach ($methods as $method) $this->route($method.' '.$url, $class.'->'.strtolower($method));
 	}
 	
 	public function generate($routeName, array $params = array()) {
@@ -235,10 +241,10 @@ class Base {
 						if(is_numeric($key)) unset($params[$key]);
 					}
 				}
-				call_user_func_array($target, array('hobo' => $this, 'params' => $params));
+				call_user_func_array($target, array('less' => $this, 'params' => $params));
 				return;
 			}
 		}
-		call_user_func_array($this->stack['DEFAULT_ROUTE'], array('hobo' => $this, 'params' => array()));
+		call_user_func_array($this->stack['DEFAULT_ROUTE'], array('less' => $this, 'params' => array()));
 	}
 }
