@@ -26,8 +26,14 @@ class Base {
 	}
 	
 	protected function __construct() {
+		error_reporting(E_ALL);
+		ini_set("display_errors", 1);
+		ini_set('default_charset', $charset='UTF-8');
+		if (extension_loaded('mbstring')) mb_internal_encoding($charset);
+		
 		$this->stack = array (
 			'TIME' => microtime(TRUE),
+			'ENCODING'=> $charset,
 			'URL' => 'http://'.$_SERVER['HTTP_HOST'].dirname($_SERVER['PHP_SELF']) . '/',
 			'PUBLIC_DIR' => 'public/',
 			'PLUGIN_DIR' => 'plugins/',
@@ -56,6 +62,10 @@ class Base {
 	
 	public function set($name, $value) {
 		$this->stack[$name] = $value;
+		if ($name == 'ENCODING') {
+			$value = ini_set('default_charset', $value);
+			if (extension_loaded('mbstring')) mb_internal_encoding($value);
+		}
 		return $this;
 	}
      
