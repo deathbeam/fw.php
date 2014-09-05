@@ -31,8 +31,8 @@ class Base {
 			'URL' => 'http://'.$_SERVER['HTTP_HOST'].dirname($_SERVER['PHP_SELF']) . '/',
 			'PUBLIC_DIR' => 'public/',
 			'PLUGIN_DIR' => 'plugins/',
-			'DEFAULT_ROUTE' => function() { echo '<b>404!</b> Page not found.'; },
-			'HTTP_TYPES' => 'GET|POST|PATCH|PUT|DELETE',
+			'DEFAULT_ROUTE' => function() { echo '<h1>404!</h1> Page not found.'; },
+			'HTTP_TYPES' => 'GET|HEAD|POST|PUT|PATCH|DELETE|CONNECT',
 			'MATCH_TYPES' => array(
 				'i'  => '[0-9]++',
 				'a'  => '[0-9A-Za-z]++',
@@ -134,15 +134,14 @@ class Base {
 		return $this;
 	}
 	
-	function map($url, $class) {
+	public function map($url, $class) {
 		$methods = explode('|', $this->stack('HTTP_TYPES'));
 		foreach ($methods as $method) $this->route($method.' '.$url, $class.'->'.strtolower($method));
 	}
 	
 	public function generate($routeName, array $params = array()) {
-		foreach ($this->routes as $route) {
-			list($method, $_route, $callback, $name) = $route;
-			if (isset($name) and $name == $routeName) { 
+		foreach ($this->routes as $_route) {
+			if (isset($_route['name']) and $_route['name'] == $routeName) { 
 				$route = $_route;
 				break;
 			}
@@ -171,9 +170,7 @@ class Base {
 
 		$requestUrl = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
 		$requestUrl = substr($requestUrl, strlen(substr(parse_url($this->stack['URL'])['path'], 0, -1)));
-
 		if (($strpos = strpos($requestUrl, '?')) !== false) $requestUrl = substr($requestUrl, 0, $strpos);
-
 		$requestMethod = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET';
 		$_REQUEST = array_merge($_GET, $_POST);
 
@@ -226,7 +223,6 @@ class Base {
 						list($block, $pre, $type, $param, $optional) = $match;
 						if (isset($this->stack['MATCH_TYPES'][$type])) $type = $this->stack['MATCH_TYPES'][$type];
 						if ($pre === '.') $pre = '\.';
-
 						$route = str_replace($block,'(?:'.($pre !== '' ? $pre : null).'('.($param !== '' ? "?P<$param>" : null).$type.'))'.($optional !== '' ? '?' : null),$route);
 					}
 				}

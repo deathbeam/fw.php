@@ -2,22 +2,23 @@
 return Cookie::getInstance();
 
 class Cookie extends Plugin {
-	private $expiry = null;
-	private $path = null;
+	private $expiry = 86400;
+	private $path = '/';
 	private $domain = null;
 	
-	public function init($less) {
-		$path = ($less->exists('COOKIE_PATH') ? $less->get('COOKIE_PATH') : '/');
-		$expiry = ($less->exists('COOKIE_EXPIRY') ? $less->get('COOKIE_EXPIRY') : 86400);
+	public function init($fw) {
+		$this->domain = $_SERVER['HTTP_HOST'];
+		if (!$fw->exists('cookie_config')) return;
+		$config = $fw->get('cookie_config');
+		$expiry = $config[1]
 		if ($expiry === -1)
 			$expiry = 1893456000; // Lifetime = 2030-01-01 00:00:00
 		  elseif (is_numeric($expiry))
 			$expiry += time();
 		  else
 			$expiry = strtotime($expiry);
-		$this->path = $path;
+		$this->path = $config[0];
 		$this->expiry = $expiry;
-		$this->domain = $_SERVER['HTTP_HOST'];
 	}
 	
 	public function toArray() {

@@ -1,5 +1,7 @@
-`less.php` is aiming to be super simple and super intuitive framework. It is inspired by my personally favorite framework, F3(fat free), but
-`less.php` have only features what are barebone for MVC framework. `less.php` core is built only on single php file.
+fw.php is aiming to be blazing fast and simple PHP micro framework. It is inspired by my personally favorite framework, F3(fat free), but
+fw.php have only features what are barebone for framework. fw do not have caching, but it do not really needs it 
+becouse fw is blazing fast with minimal overhead (fw.php have less than 10KB), its templating system uses only PHP
+and is built on single PHP file which contains only 12 functions.
 
 ## Table of Contents
 * [Installation](#installation)
@@ -15,29 +17,28 @@
 
 Common techniques are a) downloading and extracting the .zip / .tgz by hand, b) cloning the repo with git (into var/www if you are on Linux or wamp/www if you are on Windows and have Wamp installed)
 ```
-git clone https://github.com/deathbeam/lessphp.git /your/public/web/folder
+git clone https://github.com/deathbeam/fwphp.git /your/public/web/folder
 ```
 or c) getting the repo via Composer
 ```
-composer create-project deathbeam/lessphp /your/public/web/folder dev-master
+composer create-project deathbeam/fwphp /your/public/web/folder dev-master
 ```
-* Now, we need to install `mod_rewrite` becouse it is required for `.htaccess` (what is heart of all MCV frameworks).
+* Now, we need to install `mod_rewrite` becouse it is required for `.htaccess`.
 
 ## A quickstart tutorial
 
 To quickly create your first hello world application, here is minimalistic index.php example.
 ```php
-$less = require('path/to/less.php');
-$less->route('GET /',
-    function() {
-        echo 'Hello, world!';
-    }
+$fw->route('GET /[a:name]',
+	function($fw, $params) {
+		echo 'Hello, '.$params['name'].'!';
+	}
 );
-$less->run();
+$fw->run();
 ```
 
 ## Configuration
-`less.php` can be configured in 2 ways. First one is defining globals and second one is loading them from config file.
+fw.php can be configured in 2 ways. First one is defining globals and second one is loading them from config file.
 In examples below, we will:
 * Load `cookie.php` extension from `plugins/` folder
 * Change directory of public files from default `public/` to `new_public_dir/`
@@ -46,16 +47,16 @@ In examples below, we will:
 ### Defining globals
 This is basic configuration from index.php. 
 ```php
-$less->cookie = 'cookie.php';
-$less->set('PUBLIC_DIR', 'new_public_dir/');
-$less->apply();
-$less->route('GET /', 'index');
+$fw->cookie = 'cookie.php';
+$fw->set('PUBLIC_DIR', 'new_public_dir/');
+$fw->apply();
+$fw->route('GET /', 'index');
 ```
 
 ### Loading configuration file
 Loading configuration file is as easy as drinking beer.
 ```php
-$less->config('config.json')->apply();
+$fw->config('config.json')->apply();
 ```
 And some basic configuration example is below:
 ```JSON
@@ -73,18 +74,18 @@ And some basic configuration example is below:
 ```
 
 ## Views and Templates
-`less.php` have super simple templating system using PHP as templating language.
+fw.php have super simple templating system using PHP as templating language.
 Drawing template is simple:
 ```php
-$less->draw('test.php');
+$fw->draw('test.php');
 ```
-Templates can read global variables set by `$less->set` method.
+Templates can read global variables set by `$fw->set` method.
 
 ### Example template
 Below, we will create simple template logic.
 Code what will go into routed function in `index.php`
 ```php
-$less
+$fw
 	->set('header','This is example header')
 	->set('body','Content goes here')
 	->set('footer','This is example footer'))
@@ -112,7 +113,7 @@ We will save code below as `default.php` to `/public` directory
 </html>
 ```
 ## Routes
-In `less.php` we implemented very powerfull PHP router [AltoRouter](https://github.com/dannyvankooten/AltoRouter). Features
+In fw.php we implemented very powerfull PHP router [AltoRouter](https://github.com/dannyvankooten/AltoRouter). Features
 * Dynamic routing with named parameters
 * Reversed routing
 * Flexible regular expression routing
@@ -121,19 +122,19 @@ In `less.php` we implemented very powerfull PHP router [AltoRouter](https://gith
 ### Example routing
 ```php
 // mapping routes
-$less->route('GET|POST @home /', 'home#index');
-$less->route('GET /users', array('c' => 'UserController', 'a' => 'ListAction'));
-$less->route('GET @users_show /users/[i:id]', 'users#show');
-$less->route('POST @users_do /users/[i:id]/[delete|update:action]', 'usersController#doAction');
+$fw->route('GET|POST @home /', 'home#index');
+$fw->route('GET /users', array('c' => 'UserController', 'a' => 'ListAction'));
+$fw->route('GET @users_show /users/[i:id]', 'users#show');
+$fw->route('POST @users_do /users/[i:id]/[delete|update:action]', 'usersController#doAction');
 
 // provide ReST interface by mapping HTTP verb to class method
-$less->map('/rest', 'some_random_class');
+$fw->map('/rest', 'some_random_class');
 
 // default route (404 page)
-$less->route('default', 'error');
+$fw->route('default', 'error');
 
 // reversed routing
-$url = $less->generate('users_show', array('id' => 5));
+$url = $fw->generate('users_show', array('id' => 5));
 ```
 You can use the following limits on your named parameters. AltoRouter will create the correct regexes for you.
 ```

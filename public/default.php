@@ -1,6 +1,6 @@
 <?php include 'header.php';?>
 <div class="jumbotron">
-	<h1><a href="<?php echo $URL ?>">less.php</a> <small><?php echo $heading;?></small></h1>
+	<h1><a href="<?php echo $URL ?>" class="header-dark">{ fw<span>.php</span> }</a> <small><?php echo $heading;?></small></h1>
 </div>
 <div class="container">
 	<?php echo $content;?>
