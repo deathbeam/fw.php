@@ -1,27 +1,33 @@
 <?php
-$less = require('library/fw.php');
-$less->config('config.json')->apply();
+/** Step 1: Configure fw.php
+ * Here we will load configuration from
+ * json configuration file (routes, plugins,
+ * globals) and apply settings.
+ */
+$fw->config('config.json')->apply();
 
-function index($less, $params) {
-	$less
+/** Step 2: Define routes
+ * In this step we will define functions
+ * which we assigned to routes in step 2.
+ */
+function index($fw, $params) {
+	$fw
 		->set('title','fw.php')
 		->draw('home.php');
 }
 
-function error($less, $params) {
-	$less
+function error($fw, $params) {
+	$fw
 		->set('title','Page not found &middot; fw.php')
 		->set('heading','404!')
 		->set('content','This is not the web page you are looking for.')
 		->draw('default.php');
 }
 
-function docs($less, $params) {
-	$less
+function docs($fw, $params) {
+	$fw
 		->set('title','documentation &middot; fw.php')
 		->set('heading','documentation')
-		->set('content',$less->md->text(file_get_contents('README.md')))
+		->set('content',$fw->md->text(file_get_contents('README.md')))
 		->draw('default.php');
 }
-
-$less->run();

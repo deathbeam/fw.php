@@ -15,11 +15,9 @@
 		</span>
 	</div>
 </div>
-<pre><code class="header container" style="padding-bottom: 0;">$fw = require('path/to/fw.php');
-$fw->route('GET /[a:name]',
+<pre><code class="header container" style="padding-bottom: 0;">$fw->route('GET /[a:name]',
 	function($fw, $params) {
 		echo 'Hello, '.$params['name'].'!';
 	}
-);
-$fw->run();</code></pre>
+);</code></pre>
 <?php include 'footer.php';?>

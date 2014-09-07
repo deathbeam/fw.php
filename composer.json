@@ -1,9 +1,9 @@
 {
-    "name": "deathbeam/hobomvc",
+    "name": "deathbeam/fwphp",
     "type": "project",
-    "description": "Super simple and intuitive MVC framework",
-    "keywords": ["mvc", "skeleton", "boilerplate", "naked", "barebone", "application"],
-    "homepage": "http://deathbeam.github.io/hobomvc",
+    "description": "Blazing fast and simple PHP micro framework",
+    "keywords": ["framework", "skeleton", "boilerplate", "naked", "barebone", "application"],
+    "homepage": "http://deathbeam.github.io/fwphp",
     "license": "MIT",
     "authors": [
         {
@@ -13,8 +13,8 @@
         }
     ],
     "support": {
-        "issues": "https://github.com/deathbeam/hobomvc/issues",
-        "source": "https://github.com/deathbeam/hobomvc"
+        "issues": "https://github.com/deathbeam/fwphp/issues",
+        "source": "https://github.com/deathbeam/fwphp"
     },
     "require": {
         "php": ">=5.4.0"

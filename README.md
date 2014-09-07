@@ -34,7 +34,6 @@ $fw->route('GET /[a:name]',
 		echo 'Hello, '.$params['name'].'!';
 	}
 );
-$fw->run();
 ```
 
 ## Configuration

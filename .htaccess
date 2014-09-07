@@ -24,3 +24,6 @@ RewriteCond %{REQUEST_FILENAME} !-l
 
 RewriteRule .* index.php [L,QSA]
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization},L]
+
+php_value auto_prepend_file library/fw.php
+php_value auto_append_file library/fw.php
