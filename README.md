@@ -126,8 +126,8 @@ $fw->route('GET /users', array('c' => 'UserController', 'a' => 'ListAction'));
 $fw->route('GET @users_show /users/[i:id]', 'users#show');
 $fw->route('POST @users_do /users/[i:id]/[delete|update:action]', 'usersController#doAction');
 
-// provide ReST interface by mapping HTTP verb to class method
-$fw->map('/rest', 'some_random_class');
+// provide ReST interface by mapping HTTP requests to class method
+$fw->route('/rest', 'some_random_class');
 
 // default route (404 page)
 $fw->route('default', 'error');

@@ -127,6 +127,13 @@ if (!isset($fw)) {
 				return $this;
 			}
 			
+			if (is_object($callback)) {
+				foreach ((explode('|', $this->stack('HTTP_TYPES'))) as $method){
+					$this->route($method.' '.$pattern, $class.'->'.strtolower($method));
+				}
+				return $this;
+			}
+			
 			$arr = explode("/", $pattern, 2);
 			$route = '/'.$arr[1];
 			$name = null;
@@ -140,11 +147,6 @@ if (!isset($fw)) {
 			$this->routes[] = array($method, $route, $callback , $name);
 			
 			return $this;
-		}
-		
-		public function map($url, $class) {
-			$methods = explode('|', $this->stack('HTTP_TYPES'));
-			foreach ($methods as $method) $this->route($method.' '.$url, $class.'->'.strtolower($method));
 		}
 		
 		public function generate($routeName, array $params = array()) {
