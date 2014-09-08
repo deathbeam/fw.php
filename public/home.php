@@ -15,7 +15,7 @@
 		</span>
 	</div>
 </div>
-<pre><code class="header container" style="padding-bottom: 0;">$fw->route('GET /[:name]',
+<pre><code class="header container" style="padding-bottom: 0;">$fw->route('GET /@name',
 	function($fw, $params) {
 		echo 'Hello, '.$params['name'].'!';
 	}

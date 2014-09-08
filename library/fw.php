@@ -15,7 +15,7 @@ if (!isset($fw)) {
 
 	class Base {
 		const
-			HTTP_TYPES = 'GET|HEAD|POST|PUT|PATCH|DELETE|CONNECT';
+			METHODS = 'GET|HEAD|POST|PUT|PATCH|DELETE|CONNECT';
 		
 		protected 
 			$stack,
@@ -34,21 +34,18 @@ if (!isset($fw)) {
 			ini_set("display_errors", 1);
 			ini_set('default_charset', $charset='UTF-8');
 			if (extension_loaded('mbstring')) mb_internal_encoding($charset);
+			$url = implode('/',array_map('urlencode',explode('/',rtrim(dirname($_SERVER['SCRIPT_NAME']),'/'))));
+			$uri = preg_replace('/^'.preg_quote($url,'/').'/','',parse_url($_SERVER['REQUEST_URI'],PHP_URL_PATH));
 			$default_route = function() { echo '<h1>404!</h1> Page not found.'; };
+			
 			$this->stack = array (
 				'TIME' => microtime(TRUE),
 				'ENCODING'=> $charset,
-				'URL' => 'http://'.$_SERVER['HTTP_HOST'].dirname($_SERVER['PHP_SELF']),
+				'URL' => $url,
+				'URI' => $uri,
+				'METHOD' => $_SERVER['REQUEST_METHOD'],
 				'PUBLIC_DIR' => 'public/',
-				'PLUGIN_DIR' => 'plugins/',
-				'MATCH_TYPES' => array(
-					'i'  => '[0-9]++',
-					'a'  => '[0-9A-Za-z]++',
-					'h'  => '[0-9A-Fa-f]++',
-					'*'  => '.+?',
-					'**' => '.++',
-					''   => '[^/\.]++'
-				)
+				'PLUGIN_DIR' => 'plugins/'
 			);
 		}
 
@@ -92,7 +89,7 @@ if (!isset($fw)) {
 			return $this->stack;
 		}
 
-		public function config($file) {
+		public function config($file = null) {
 			$config = json_decode(file_get_contents($file),true);
 			if (isset($config['globals'])) foreach ($config['globals'] as $key => $value) $this->set($key, $value);
 			if (isset($config['plugins'])) foreach ($config['plugins'] as $key => $value) $this->{strtr($key,array(' '=>''))} = strtr($value,array(' '=>''));
@@ -119,16 +116,16 @@ if (!isset($fw)) {
 				), $html);
 		}
 
-		public function route($pattern, $callback) {
+		public function route($pattern, $target) {
 			$pattern = strtr($pattern,array(' '=>''));
 			
 			if ($pattern == 'default') {
-				$this->default_route = $callback;
+				$this->default_route = $target;
 				return $this;
 			}
 			
-			if (is_object($callback)) {
-				foreach ((explode('|', self::HTTP_TYPES)) as $method){
+			if (is_object($target)) {
+				foreach ((explode('|', self::METHODS)) as $method){
 					$this->route($method.' '.$pattern, $class.'->'.strtolower($method));
 				}
 				return $this;
@@ -144,7 +141,7 @@ if (!isset($fw)) {
 			}
 			
 			$method = $arr[0];
-			$this->routes[] = array($method, $route, $callback , $name);
+			$this->routes[] = array($method, $route, $target , $name);
 			
 			return $this;
 		}
@@ -181,83 +178,38 @@ if (!isset($fw)) {
 		}
 
 		public function run() {
-			$params = array();
-			$match = false;
-
-			$requestUrl = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
-			$requestUrl = substr($requestUrl, strlen(parse_url($this->stack['URL'])['path']));
-			if (($strpos = strpos($requestUrl, '?')) !== false) $requestUrl = substr($requestUrl, 0, $strpos);
-			$requestMethod = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET';
-			$_REQUEST = array_merge($_GET, $_POST);
-
 			foreach($this->routes as $handler) {
-				list($method, $_route, $target) = $handler;
+				list($method, $route, $target) = $handler;
 				$methods = explode('|', $method);
 				$method_match = false;
-				
 				foreach($methods as $method) {
-					if (strcasecmp($requestMethod, $method) === 0) {
+					if (strcasecmp($this->stack['METHOD'], $method) === 0) {
 						$method_match = true;
 						break;
 					}
 				}
 				
-				if(!$method_match) continue;
-
-				if ($_route === '*') {
-					$match = true;
-				} elseif (isset($_route[0]) && $_route[0] === '@') {
-					$pattern = '`' . substr($_route, 1) . '`u';
-					$match = preg_match($pattern, $requestUrl, $params);
-				} else {
-					$route = null;
-					$regex = false;
-					$j = 0;
-					$n = isset($_route[0]) ? $_route[0] : null;
-					$i = 0;
-
-					while (true) {
-						if (!isset($_route[$i])) {
-							break;
-						} elseif (false === $regex) {
-							$c = $n;
-							$regex = $c === '[' || $c === '(' || $c === '.';
-							if (false === $regex && false !== isset($_route[$i+1])) {
-								$n = $_route[$i + 1];
-								$regex = $n === '?' || $n === '+' || $n === '*' || $n === '{';
-							}
-							if (false === $regex && $c !== '/' && (!isset($requestUrl[$j]) || $c !== $requestUrl[$j])) {
-								continue 2;
-							}
-							$j++;
-						}
-						$route .= $_route[$i++];
+				if (!$method_match or 
+					!preg_match('/^'.
+					preg_replace('/@(\w+\b)/','(?P<\1>[^\/\?]+)',
+					str_replace('\*','([^\?]*)',preg_quote($route,'/'))).
+					'\/?(?:\?.*)?$/ium',$this->stack['URI'],$params))
+					continue;
+				
+				if (is_string($target)) {
+					$target = preg_replace_callback('/@(\w+\b)/',
+						function($id) use($params) {
+							return isset($params[$id[1]])?$params[$id[1]]:$id[0];
+						},
+						$target
+					);
+					if (preg_match('/(.+)\h*(?:->|::)/',$target,$match) && !class_exists($match[1])) {
+						return call_user_func_array($this->default_route, array($this, null));
 					}
-					
-					if (preg_match_all('`(/|\.|)\[([^:\]]*+)(?::([^:\]]*+))?\](\?|)`', $route, $matches, PREG_SET_ORDER)) {
-						foreach($matches as $match) {
-							list($block, $pre, $type, $param, $optional) = $match;
-							if (isset($this->stack['MATCH_TYPES'][$type])) $type = $this->stack['MATCH_TYPES'][$type];
-							if ($pre === '.') $pre = '\.';
-							$route = str_replace($block,'(?:'.($pre !== '' ? $pre : null).'('.($param !== '' ? "?P<$param>" : null).$type.'))'.($optional !== '' ? '?' : null),$route);
-						}
-					}
-					
-					$regex = "`^$route$`u";
-					$match = preg_match($regex, $requestUrl, $params);
 				}
-
-				if(($match == true || $match > 0)) {
-					if($params) {
-						foreach($params as $key => $value) {
-							if(is_numeric($key)) unset($params[$key]);
-						}
-					}
-					call_user_func_array($target, array($this, $params));
-					return;
-				}
+				return call_user_func_array($target, array($this, $params));
 			}
-			call_user_func_array($this->default_route, array($this, null));
+			return call_user_func_array($this->default_route, array($this, null));
 		}
 	}
 

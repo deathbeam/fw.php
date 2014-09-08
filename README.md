@@ -5,7 +5,6 @@ and is built on single PHP file which contains only 12 functions.
 
 ## Table of Contents
 * [Installation](#installation)
-* [A quickstart tutorial](#a-quickstart-tutorial)
 * [Configuration](#configuration)
 * [Views and Templates](#views-and-templates)
 * [Routes](#routes)
@@ -24,17 +23,6 @@ or c) getting the repo via Composer
 composer create-project deathbeam/fwphp /your/public/web/folder dev-master
 ```
 * Now, we need to install `mod_rewrite` becouse it is required for `.htaccess`.
-
-## A quickstart tutorial
-
-To quickly create your first hello world application, here is minimalistic index.php example.
-```php
-$fw->route('GET /[:name]',
-	function($fw, $params) {
-		echo 'Hello, '.$params['name'].'!';
-	}
-);
-```
 
 ## Configuration
 fw.php can be configured in 2 ways. First one is defining globals and second one is loading them from config file.
@@ -111,22 +99,22 @@ We will save code below as `default.php` to `/public` directory
 </html>
 ```
 ## Routes
-In fw.php we implemented very powerfull PHP router [AltoRouter](https://github.com/dannyvankooten/AltoRouter). Features
+In fw.php I implemented routing very similar to F3 routing. Features:
 * Dynamic routing with named parameters
 * Reversed routing
 * Flexible regular expression routing
-* Custom regexes
+* ReST route mapping
 
 ### Example routing
 ```php
 // mapping routes
-$fw->route('home: GET|POST /', 'home#index');
-$fw->route('GET /users', array('c' => 'UserController', 'a' => 'ListAction'));
-$fw->route('users_show: GET /users/[i:id]', 'users#show');
-$fw->route('users_do: POST /users/[i:id]/[delete|update:action]', 'usersController#doAction');
+$fw->route('home: GET|POST /', 'home');
+$fw->route('GET /users', 'users');
+$fw->route('users_show: GET /users/@id', 'showUser');
+$fw->route('users_do: POST /users/@id/@action', 'userController->@action');
 
 // provide ReST interface by mapping HTTP requests to class method
-$fw->route('/rest', 'some_random_class');
+$fw->route('/rest', 'some_class');
 
 // default route (404 page)
 $fw->route('default', 'error');
@@ -134,36 +122,6 @@ $fw->route('default', 'error');
 // redirect
 $fw->reroute('users_show', array('id' => 5));
 $fw->reroute('/users');
-```
-You can use the following limits on your named parameters. AltoRouter will create the correct regexes for you.
-```
-*                    // Match all request URIs
-[i]                  // Match an integer
-[i:id]               // Match an integer as 'id'
-[a:action]           // Match alphanumeric characters as 'action'
-[h:key]              // Match hexadecimal characters as 'key'
-[:action]            // Match anything up to the next / or end of the URI as 'action'
-[create|edit:action] // Match either 'create' or 'edit' as 'action'
-[*]                  // Catch all (lazy, stops at the next trailing slash)
-[*:trailing]         // Catch all as 'trailing' (lazy)
-[**:trailing]        // Catch all (possessive - will match the rest of the URI)
-.[:format]?          // Match an optional parameter 'format' - a / or . before the block is also optional
-```
-Some more complicated examples
-```
-@/(?[A-Za-z]{2}_[A-Za-z]{2})$ // custom regex, matches language codes like "en_us" etc.
-/posts/[*:title][i:id]        // Matches "/posts/this-is-a-title-123"
-/output.[xml|json:format]?    // Matches "/output", "output.xml", "output.json"
-/[:controller]?/[:action]?    // Matches the typical /controller/action 
-```
-The character before the colon (the 'match type') is a shortcut for one of the following regular expressions
-```php
-'i'  => '[0-9]++'
-'a'  => '[0-9A-Za-z]++'
-'h'  => '[0-9A-Fa-f]++'
-'*'  => '.+?'
-'**' => '.++'
-''   => '[^/\.]++'
 ```
 
 ## License
