@@ -6,16 +6,16 @@
 		<span class="hidden-xs">
 			<a href="https://github.com/deathbeam/fwphp/archive/master.zip" class="btn btn-dark btn-lg"><i class="fa fa-download fa-fw"></i> Download</a>
 			<a href="https://github.com/deathbeam/fwphp" class="btn btn-dark btn-lg"><i class="fa fa-github fa-fw"></i> Contribute</a>
-			<a href="<?php echo $URL ?>docs" class="btn btn-dark btn-lg"><i class="fa fa-file-text fa-fw"></i> Documentation</a>
+			<a href="<?php echo $URL ?>/docs" class="btn btn-dark btn-lg"><i class="fa fa-file-text fa-fw"></i> Documentation</a>
 		</span>
 		<span class="visible-xs">
 			<a href="https://github.com/deathbeam/fwphp/archive/master.zip" class="btn btn-dark btn-md"><i class="fa fa-download fa-fw"></i> Download</a>
 			<a href="https://github.com/deathbeam/fwphp" class="btn btn-dark btn-md"><i class="fa fa-github fa-fw"></i> Contribute</a>
-			<a href="<?php echo $URL ?>docs" class="btn btn-dark btn-md"><i class="fa fa-file-text fa-fw"></i> Documentation</a>
+			<a href="<?php echo $URL ?>/docs" class="btn btn-dark btn-md"><i class="fa fa-file-text fa-fw"></i> Documentation</a>
 		</span>
 	</div>
 </div>
-<pre><code class="header container" style="padding-bottom: 0;">$fw->route('GET /[a:name]',
+<pre><code class="header container" style="padding-bottom: 0;">$fw->route('GET /[:name]',
 	function($fw, $params) {
 		echo 'Hello, '.$params['name'].'!';
 	}

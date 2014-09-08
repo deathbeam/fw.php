@@ -25,5 +25,6 @@ RewriteCond %{REQUEST_FILENAME} !-l
 RewriteRule .* index.php [L,QSA]
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization},L]
 
+# Include fw.php logic at beggining and at end of index.php file
 php_value auto_prepend_file library/fw.php
 php_value auto_append_file library/fw.php

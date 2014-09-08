@@ -29,7 +29,7 @@ composer create-project deathbeam/fwphp /your/public/web/folder dev-master
 
 To quickly create your first hello world application, here is minimalistic index.php example.
 ```php
-$fw->route('GET /[a:name]',
+$fw->route('GET /[:name]',
 	function($fw, $params) {
 		echo 'Hello, '.$params['name'].'!';
 	}
@@ -46,16 +46,15 @@ In examples below, we will:
 ### Defining globals
 This is basic configuration from index.php. 
 ```php
-$fw->cookie = 'cookie.php';
 $fw->set('PUBLIC_DIR', 'new_public_dir/');
-$fw->apply();
+$fw->cookie = 'cookie.php';
 $fw->route('GET /', 'index');
 ```
 
 ### Loading configuration file
 Loading configuration file is as easy as drinking beer.
 ```php
-$fw->config('config.json')->apply();
+$fw->config('config.json');
 ```
 And some basic configuration example is below:
 ```JSON
@@ -121,10 +120,10 @@ In fw.php we implemented very powerfull PHP router [AltoRouter](https://github.c
 ### Example routing
 ```php
 // mapping routes
-$fw->route('GET|POST @home /', 'home#index');
+$fw->route('home: GET|POST /', 'home#index');
 $fw->route('GET /users', array('c' => 'UserController', 'a' => 'ListAction'));
-$fw->route('GET @users_show /users/[i:id]', 'users#show');
-$fw->route('POST @users_do /users/[i:id]/[delete|update:action]', 'usersController#doAction');
+$fw->route('users_show: GET /users/[i:id]', 'users#show');
+$fw->route('users_do: POST /users/[i:id]/[delete|update:action]', 'usersController#doAction');
 
 // provide ReST interface by mapping HTTP requests to class method
 $fw->route('/rest', 'some_random_class');
@@ -132,8 +131,9 @@ $fw->route('/rest', 'some_random_class');
 // default route (404 page)
 $fw->route('default', 'error');
 
-// reversed routing
-$url = $fw->generate('users_show', array('id' => 5));
+// redirect
+$fw->reroute('users_show', array('id' => 5));
+$fw->reroute('/users');
 ```
 You can use the following limits on your named parameters. AltoRouter will create the correct regexes for you.
 ```
@@ -151,6 +151,7 @@ You can use the following limits on your named parameters. AltoRouter will creat
 ```
 Some more complicated examples
 ```
+@/(?[A-Za-z]{2}_[A-Za-z]{2})$ // custom regex, matches language codes like "en_us" etc.
 /posts/[*:title][i:id]        // Matches "/posts/this-is-a-title-123"
 /output.[xml|json:format]?    // Matches "/output", "output.xml", "output.json"
 /[:controller]?/[:action]?    // Matches the typical /controller/action 

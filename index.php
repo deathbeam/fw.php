@@ -1,10 +1,9 @@
 <?php
 /** Step 1: Configure fw.php
- * Here we will load configuration from
- * json configuration file (routes, plugins,
- * globals) and apply settings.
+ * Here we will configure fw using json 
+ * configuration file.
  */
-$fw->config('config.json')->apply();
+$fw->config('config.json');
 
 /** Step 2: Define routes
  * In this step we will define functions

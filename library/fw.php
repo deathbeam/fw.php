@@ -6,37 +6,41 @@ if (!isset($fw)) {
 			if (null === $instance) $instance = new static();
 			return $instance;
 		}
-		
+
 		public function init($less) { }
 		protected function __construct() { }
 		private function __clone() { }
 		private function __wakeup() { }
 	}
+
 	class Base {
-		protected $stack = array();
-		protected $plugins = array();
-		protected $routes = array();
+		const
+			HTTP_TYPES = 'GET|HEAD|POST|PUT|PATCH|DELETE|CONNECT';
 		
+		protected 
+			$stack,
+			$plugins,
+			$routes,
+			$default_route;
+
 		public static function getInstance() {
 			static $instance = null;
 			if (null === $instance) $instance = new static();
 			return $instance;
 		}
-		
+
 		protected function __construct() {
 			error_reporting(E_ALL);
 			ini_set("display_errors", 1);
 			ini_set('default_charset', $charset='UTF-8');
 			if (extension_loaded('mbstring')) mb_internal_encoding($charset);
-			
+			$default_route = function() { echo '<h1>404!</h1> Page not found.'; };
 			$this->stack = array (
 				'TIME' => microtime(TRUE),
 				'ENCODING'=> $charset,
-				'URL' => 'http://'.$_SERVER['HTTP_HOST'].dirname($_SERVER['PHP_SELF']) . '/',
+				'URL' => 'http://'.$_SERVER['HTTP_HOST'].dirname($_SERVER['PHP_SELF']),
 				'PUBLIC_DIR' => 'public/',
 				'PLUGIN_DIR' => 'plugins/',
-				'DEFAULT_ROUTE' => function() { echo '<h1>404!</h1> Page not found.'; },
-				'HTTP_TYPES' => 'GET|HEAD|POST|PUT|PATCH|DELETE|CONNECT',
 				'MATCH_TYPES' => array(
 					'i'  => '[0-9]++',
 					'a'  => '[0-9A-Za-z]++',
@@ -47,9 +51,11 @@ if (!isset($fw)) {
 				)
 			);
 		}
-		
+
 		public function __set($name, $value) {
-			if (!isset($this->plugins[$name])) $this->plugins[$name] = include $this->stack['PLUGIN_DIR'].$value;
+			if (isset($this->plugins[$name])) throw new InvalidArgumentException("Plugin '$name' is already loaded.");
+			$this->plugins[$name] = include $this->stack['PLUGIN_DIR'].$value;
+			$this->plugins[$name]->init($this);
 			return $this;
 		}
 
@@ -57,7 +63,7 @@ if (!isset($fw)) {
 			if (!isset($this->plugins[$name])) throw new InvalidArgumentException("Plugin '$name' is not loaded.");
 			return $this->plugins[$name];
 		}
-		
+
 		public function set($name, $value) {
 			$this->stack[$name] = $value;
 			if ($name == 'ENCODING') {
@@ -66,29 +72,24 @@ if (!isset($fw)) {
 			}
 			return $this;
 		}
-		 
+
 		public function get($name) {
 			if (!isset($this->stack[$name])) throw new InvalidArgumentException("Unable to get the field '$name'.");
 			return $this->stack[$name];
 		}
-		
+
 		public function exists($name) {
 			return isset($this->stack[$name]);
 		}
-		
+
 		public function clear($name) {
 			if (!isset($this->stack[$name])) throw new InvalidArgumentException("Unable to unset the field '$field'.");
 			unset($this->stack[$name]);
 			return $this;
 		}
-		
+
 		public function toArray() {
 			return $this->stack;
-		}
-		
-		public function apply() {
-			foreach($this->plugins as $key => $value) $value->init($this);
-			return $this;
 		}
 
 		public function config($file) {
@@ -96,16 +97,15 @@ if (!isset($fw)) {
 			if (isset($config['globals'])) foreach ($config['globals'] as $key => $value) $this->set($key, $value);
 			if (isset($config['plugins'])) foreach ($config['plugins'] as $key => $value) $this->{strtr($key,array(' '=>''))} = strtr($value,array(' '=>''));
 			if (isset($config['routes'])) foreach ($config['routes'] as $key => $value) $this->route($key, $value);
-			if (isset($config['maps'])) foreach ($config['maps'] as $key => $value) $this->map($key, $value);
 			return $this;
 		}
-		
+
 		public function draw($file) {
 			extract($this->stack);
 			ob_start();
 			include $this->stack['PUBLIC_DIR'].$file;
 			$html = ob_get_clean();
-			$path = $this->stack['URL'].$this->stack['PUBLIC_DIR'];
+			$path = $this->stack['URL'].'/'.$this->stack['PUBLIC_DIR'];
 			echo preg_replace(
 				array(
 					'/<img(.*?)src=(?:")(http|https)\:\/\/([^"]+?)(?:")/i','/<img(.*?)src=(?:")([^"]+?)#(?:")/i','/<img(.*?)src="(.*?)"/', '/<img(.*?)src=(?:\@)([^"]+?)(?:\@)/i',
@@ -118,17 +118,17 @@ if (!isset($fw)) {
 					'<link$1href=@$2://$3@', '<link$1href=@$2@' , '<link$1href="' . $path . '$2"', '<link$1href="$2"'
 				), $html);
 		}
-	  
+
 		public function route($pattern, $callback) {
 			$pattern = strtr($pattern,array(' '=>''));
 			
 			if ($pattern == 'default') {
-				$this->stack['DEFAULT_ROUTE'] = $callback;
+				$this->default_route = $callback;
 				return $this;
 			}
 			
 			if (is_object($callback)) {
-				foreach ((explode('|', $this->stack('HTTP_TYPES'))) as $method){
+				foreach ((explode('|', self::HTTP_TYPES)) as $method){
 					$this->route($method.' '.$pattern, $class.'->'.strtolower($method));
 				}
 				return $this;
@@ -138,9 +138,9 @@ if (!isset($fw)) {
 			$route = '/'.$arr[1];
 			$name = null;
 			
-			if (strpos($arr[0], '@') !== false) {
-				$arr = explode("@", $arr[0], 2);
-				$name = $arr[1];
+			if (strpos($arr[0], ':') !== false) {
+				$arr = explode(":", $arr[0], 2);
+				$name = $arr[0];
 			}
 			
 			$method = $arr[0];
@@ -148,38 +148,44 @@ if (!isset($fw)) {
 			
 			return $this;
 		}
-		
-		public function generate($routeName, array $params = array()) {
+
+		public function reroute($pattern, array $params = array()) {
 			foreach ($this->routes as $_route) {
-				if (isset($_route['name']) and $_route['name'] == $routeName) { 
-					$route = $_route;
+				if (isset($_route[1]) and $_route[1] == $pattern) { 
+					$route = $_route[1];
+					break;
+				} elseif (isset($_route[3]) and $_route[3] == $pattern) { 
+					$route = $_route[1];
 					break;
 				}
 			}
-			if(!isset($route)) throw new InvalidArgumentException("Route '$routeName' does not exist.");
-			$url = substr($this->stack['URL'], 0, -1).$route;
+			if (isset($route)) {
+				$url = $this->stack['URL'].$route;
 
-			if (preg_match_all('`(/|\.|)\[([^:\]]*+)(?::([^:\]]*+))?\](\?|)`', $route, $matches, PREG_SET_ORDER)) {
-				foreach($matches as $match) {
-					list($block, $pre, $type, $param, $optional) = $match;
-					if ($pre) $block = substr($block, 1);
-					if(isset($params[$param])) {
-						$url = str_replace($block, $params[$param], $url);
-					} elseif ($optional) {
-						$url = str_replace($pre . $block, '', $url);
+				if (preg_match_all('`(/|\.|)\[([^:\]]*+)(?::([^:\]]*+))?\](\?|)`', $route, $matches, PREG_SET_ORDER)) {
+					foreach($matches as $match) {
+						list($block, $pre, $type, $param, $optional) = $match;
+						if ($pre) $block = substr($block, 1);
+						if(isset($params[$param])) {
+							$url = str_replace($block, $params[$param], $url);
+						} elseif ($optional) {
+							$url = str_replace($pre . $block, '', $url);
+						}
 					}
 				}
+			} else {
+				$url = $this->stack['URL'];
 			}
 
-			return $url;
+			header('Location: '.$url);
 		}
-		
+
 		public function run() {
 			$params = array();
 			$match = false;
 
 			$requestUrl = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
-			$requestUrl = substr($requestUrl, strlen(substr(parse_url($this->stack['URL'])['path'], 0, -1)));
+			$requestUrl = substr($requestUrl, strlen(parse_url($this->stack['URL'])['path']));
 			if (($strpos = strpos($requestUrl, '?')) !== false) $requestUrl = substr($requestUrl, 0, $strpos);
 			$requestMethod = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET';
 			$_REQUEST = array_merge($_GET, $_POST);
@@ -251,9 +257,10 @@ if (!isset($fw)) {
 					return;
 				}
 			}
-			call_user_func_array($this->stack['DEFAULT_ROUTE'], array($this, null));
+			call_user_func_array($this->default_route, array($this, null));
 		}
 	}
+
 	$fw = Base::getInstance();
 } else {
 	$fw->run();
