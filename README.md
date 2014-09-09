@@ -28,13 +28,13 @@ composer create-project deathbeam/fwphp /your/public/web/folder dev-master
 fw.php can be configured in 2 ways. First one is defining globals and second one is loading them from config file.
 In examples below, we will:
 * Load `cookie.php` extension from `plugins/` folder
-* Change directory of public files from default `public/` to `new_public_dir/`
+* Change directory of public files from default `./public` to `./new_public_dir`
 * Set `/` route to `index` function
 
 ### Defining globals
 This is basic configuration from index.php. 
 ```php
-$fw->set('PUBLIC_DIR', 'new_public_dir/');
+$fw->set('PUBLIC_DIR', './new_public_dir');
 $fw->cookie = 'cookie.php';
 $fw->route('GET /', 'index');
 ```
@@ -48,7 +48,7 @@ And some basic configuration example is below:
 ```JSON
 {
 	"globals": {
-		"PUBLIC_DIR": "new_public_dir/"
+		"PUBLIC_DIR": "./new_public_dir"
 	},
 	"libs": {
 		"cookie": "cookie.php"

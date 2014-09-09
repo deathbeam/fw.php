@@ -51,8 +51,8 @@ if (!isset($fw)) {
 				'URL' => $url,
 				'URI' => $uri,
 				'METHOD' => $_SERVER['REQUEST_METHOD'],
-				'PUBLIC_DIR' => 'public/',
-				'PLUGIN_DIR' => 'plugins/'
+				'PUBLIC_DIR' => './public',
+				'PLUGIN_DIR' => 'plugins'
 			);
 		}
 		
@@ -67,7 +67,7 @@ if (!isset($fw)) {
 
 		public function __set($name, $value) {
 			if (isset($this->plugins[$name])) $this->error(self::E_Plugin, $name);
-			$this->plugins[$name] = include $this->stack['PLUGIN_DIR'].$value;
+			$this->plugins[$name] = include $this->stack['PLUGIN_DIR'].'/'.$value;
 			$this->plugins[$name]->init($this);
 			return $this;
 		}
@@ -116,9 +116,8 @@ if (!isset($fw)) {
 		public function draw($file) {
 			extract(array_map('urldecode', $this->stack));
 			ob_start();
-			include $this->stack['PUBLIC_DIR'].$file;
+			include ($path = $this->stack['PUBLIC_DIR'].'/').$file;
 			$html = ob_get_clean();
-			$path = $this->stack['URL'].'/'.$this->stack['PUBLIC_DIR'];
 			echo preg_replace(
 				array(
 					'/<img(.*?)src=(?:")(http|https)\:\/\/([^"]+?)(?:")/i','/<img(.*?)src=(?:")([^"]+?)#(?:")/i','/<img(.*?)src="(.*?)"/', '/<img(.*?)src=(?:\@)([^"]+?)(?:\@)/i',
@@ -197,9 +196,8 @@ if (!isset($fw)) {
 			if (!isset($this->routes)) $this->error(self::E_Routes);
 			foreach($this->routes as $handler) {
 				list($method, $route, $target) = $handler;
-				$methods = explode('|', $method);
 				$method_match = false;
-				foreach($methods as $method) {
+				foreach(explode('|', $method) as $method) {
 					if (strcasecmp($this->stack['METHOD'], $method) === 0) {
 						$method_match = true;
 						break;
@@ -212,10 +210,6 @@ if (!isset($fw)) {
 					str_replace('\*','([^\?]*)',preg_quote($route,'/'))).
 					'\/?(?:\?.*)?$/ium',$this->stack['URI'],$params))
 					continue;
-				
-				if (!function_exists($target)) {
-					$this->error(self::E_Function, $target);
-				}
 						
 				if (is_string($target)) {
 					$target = preg_replace_callback('/@(\w+\b)/',
@@ -233,6 +227,7 @@ if (!isset($fw)) {
 					}
 				}
 				
+				if (!function_exists($target)) $this->error(self::E_Function, $target);
 				return call_user_func_array($target, array($this, $params));
 			}
 			return call_user_func_array($this->default_route, array($this, null));

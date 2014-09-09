@@ -7,7 +7,7 @@ $fw->config('config.json');
 
 /** Step 2: Define routes
  * In this step we will define functions
- * which we assigned to routes in step 2.
+ * which we assigned to routes in step 1.
  */
 function index($fw, $params) {
 	$fw
