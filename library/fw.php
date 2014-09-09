@@ -15,7 +15,14 @@ if (!isset($fw)) {
 
 	class Base {
 		const
-			METHODS = 'GET|HEAD|POST|PUT|PATCH|DELETE|CONNECT';
+			METHODS = 'GET|HEAD|POST|PUT|PATCH|DELETE|CONNECT',
+			E_Stack = 'Invalid stack key %s',
+			E_Route='Route does not exist: %s',
+			E_Routes = 'No routes specified',
+			E_Class='Invalid class %s',
+			E_Method='Invalid method %s',
+			E_Function='Invalid function %s',
+			E_Plugin = 'Invalid plugin %s';
 		
 		protected 
 			$stack,
@@ -48,16 +55,25 @@ if (!isset($fw)) {
 				'PLUGIN_DIR' => 'plugins/'
 			);
 		}
+		
+		protected function error($string, $var = null) {
+			if (isset($var)) {
+				$errMessage = strtr($string,array('%s'=>$var));
+			} else {
+				$errMessage = $string;
+			}
+			throw new Exception($errMessage);
+		}
 
 		public function __set($name, $value) {
-			if (isset($this->plugins[$name])) throw new InvalidArgumentException("Plugin '$name' is already loaded.");
+			if (isset($this->plugins[$name])) $this->error(self::E_Plugin, $name);
 			$this->plugins[$name] = include $this->stack['PLUGIN_DIR'].$value;
 			$this->plugins[$name]->init($this);
 			return $this;
 		}
 
 		public function __get($name) {
-			if (!isset($this->plugins[$name])) throw new InvalidArgumentException("Plugin '$name' is not loaded.");
+			if (!isset($this->plugins[$name])) $this->error(self::E_Plugin, $name);
 			return $this->plugins[$name];
 		}
 
@@ -71,7 +87,7 @@ if (!isset($fw)) {
 		}
 
 		public function get($name) {
-			if (!isset($this->stack[$name])) throw new InvalidArgumentException("Unable to get the field '$name'.");
+			if (!isset($this->stack[$name])) $this->error(self::E_Stack, $name);
 			return $this->stack[$name];
 		}
 
@@ -80,7 +96,7 @@ if (!isset($fw)) {
 		}
 
 		public function clear($name) {
-			if (!isset($this->stack[$name])) throw new InvalidArgumentException("Unable to unset the field '$field'.");
+			if (!isset($this->stack[$name])) $this->error(self::E_Stack, $name);
 			unset($this->stack[$name]);
 			return $this;
 		}
@@ -98,7 +114,7 @@ if (!isset($fw)) {
 		}
 
 		public function draw($file) {
-			extract($this->stack);
+			extract(array_map('urldecode', $this->stack));
 			ob_start();
 			include $this->stack['PUBLIC_DIR'].$file;
 			$html = ob_get_clean();
@@ -170,14 +186,15 @@ if (!isset($fw)) {
 						}
 					}
 				}
+				
+				header('Location: '.$url);
 			} else {
-				$url = $this->stack['URL'];
+				$this->error(self::E_Route, $route);
 			}
-
-			header('Location: '.$url);
 		}
 
 		public function run() {
+			if (!isset($this->routes)) $this->error(self::E_Routes);
 			foreach($this->routes as $handler) {
 				list($method, $route, $target) = $handler;
 				$methods = explode('|', $method);
@@ -196,6 +213,10 @@ if (!isset($fw)) {
 					'\/?(?:\?.*)?$/ium',$this->stack['URI'],$params))
 					continue;
 				
+				if (!function_exists($target)) {
+					$this->error(self::E_Function, $target);
+				}
+						
 				if (is_string($target)) {
 					$target = preg_replace_callback('/@(\w+\b)/',
 						function($id) use($params) {
@@ -203,10 +224,15 @@ if (!isset($fw)) {
 						},
 						$target
 					);
-					if (preg_match('/(.+)\h*(?:->|::)/',$target,$match) && !class_exists($match[1])) {
-						return call_user_func_array($this->default_route, array($this, null));
+					if (preg_match('/(.+)\h*(?:->|::)/', $target, $match)) {
+						if (!class_exists($match[1])) {
+							$this->error(self::E_Class, $match[1]);
+						} elseif (!method_exists($match[1],$match[2])) {
+							$this->error(self::E_Method, $match[2]);
+						}
 					}
 				}
+				
 				return call_user_func_array($target, array($this, $params));
 			}
 			return call_user_func_array($this->default_route, array($this, null));
