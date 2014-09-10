@@ -51,19 +51,20 @@ composer create-project deathbeam/fwphp /your/public/web/folder dev-master
 | config(file)                   | $fw->config('config.json')          | Configure fw.php from json configuration file                   |
 | draw(template)                 | $fw->draw('template.php')           | Renders specified template                                      |
 | route(pattern, callable)       | $fw->route('GET /', function())     | Adds route with specified pattern and callback to routing array |
-| reroute(pattern, [opt] params) | $fw->reroute(/')                    |                                                                 |
+| reroute(pattern, [opt] params) | $fw->reroute(/')                    | Redirects user to specified route            
+|
 
 ## Configuration
 fw.php can be configured in 2 ways. First one is defining globals and second one is loading them from config file.
 In examples below, we will:
-* Load `cookie.php` extension from `plugins/` folder
+* Load `cookie.php` extension from `plugins` folder
 * Change directory of public files from default `./public` to `./new_public_dir`
 * Set `/` route to `index` function
 
 ### Defining globals
 This is basic configuration from index.php. 
 ```php
-$fw->set('PUBLIC_DIR', './new_public_dir');
+$fw->set('public_dir', './new_public_dir');
 $fw->cookie = 'cookie.php';
 $fw->route('GET /', 'index');
 ```
@@ -77,7 +78,7 @@ And some basic configuration example is below:
 ```JSON
 {
 	"globals": {
-		"PUBLIC_DIR": "./new_public_dir"
+		"public_dir": "./new_public_dir"
 	},
 	"libs": {
 		"cookie": "cookie.php"
