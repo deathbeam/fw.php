@@ -15,7 +15,7 @@ if (!isset($fw)) {
 
 	class Base {
 		const
-			METHODS = 'GET|HEAD|POST|PUT|PATCH|DELETE|CONNECT',
+			Methods = 'GET|HEAD|POST|PUT|PATCH|DELETE|CONNECT',
 			E_Stack = 'Invalid stack key %s',
 			E_Route='Route does not exist: %s',
 			E_Routes = 'No routes specified',
@@ -28,6 +28,7 @@ if (!isset($fw)) {
 			$stack,
 			$plugins,
 			$routes,
+			$hooks,
 			$default_route;
 
 		public static function getInstance() {
@@ -46,13 +47,13 @@ if (!isset($fw)) {
 			$default_route = function() { echo '<h1>404!</h1> Page not found.'; };
 			
 			$this->stack = array (
-				'TIME' => microtime(TRUE),
-				'ENCODING'=> $charset,
-				'URL' => $url,
-				'URI' => $uri,
-				'METHOD' => $_SERVER['REQUEST_METHOD'],
-				'PUBLIC_DIR' => './public',
-				'PLUGIN_DIR' => 'plugins'
+				'time' => microtime(TRUE),
+				'encoding'=> $charset,
+				'url' => $url,
+				'uri' => $uri,
+				'method' => $_SERVER['REQUEST_METHOD'],
+				'public_dir' => './public',
+				'plugin_dir' => './plugins'
 			);
 		}
 		
@@ -67,7 +68,7 @@ if (!isset($fw)) {
 
 		public function __set($name, $value) {
 			if (isset($this->plugins[$name])) $this->error(self::E_Plugin, $name);
-			$this->plugins[$name] = include $this->stack['PLUGIN_DIR'].'/'.$value;
+			$this->plugins[$name] = include $this->stack['plugin_dir'].'/'.$value;
 			$this->plugins[$name]->init($this);
 			return $this;
 		}
@@ -79,7 +80,7 @@ if (!isset($fw)) {
 
 		public function set($name, $value) {
 			$this->stack[$name] = $value;
-			if ($name == 'ENCODING') {
+			if ($name == 'encoding') {
 				$value = ini_set('default_charset', $value);
 				if (extension_loaded('mbstring')) mb_internal_encoding($value);
 			}
@@ -101,8 +102,19 @@ if (!isset($fw)) {
 			return $this;
 		}
 
-		public function toArray() {
+		public function stack() {
 			return $this->stack;
+		}
+		
+		public function hook($name, $callable) {
+			if (!is_callable($callable)) $this->error(self::E_Function, $callable);
+			$this->hooks[$name] = $callable;
+		}
+
+		public function invoke($hook, $arg = null) {
+			if (isset($this->hooks[$hook]) && is_callable($this->hooks[$hook])) {
+				call_user_func($this->hooks[$hook], $arg);
+			}
 		}
 
 		public function config($file = null) {
@@ -116,8 +128,9 @@ if (!isset($fw)) {
 		public function draw($file) {
 			extract(array_map('urldecode', $this->stack));
 			ob_start();
-			include ($path = $this->stack['PUBLIC_DIR'].'/').$file;
-			$html = ob_get_clean();
+			$this->invoke('draw_before');
+			include ($path = $this->stack['public_dir'].'/').$file;
+			$this->invoke('draw_after');
 			echo preg_replace(
 				array(
 					'/<img(.*?)src=(?:")(http|https)\:\/\/([^"]+?)(?:")/i','/<img(.*?)src=(?:")([^"]+?)#(?:")/i','/<img(.*?)src="(.*?)"/', '/<img(.*?)src=(?:\@)([^"]+?)(?:\@)/i',
@@ -128,7 +141,8 @@ if (!isset($fw)) {
 					'<img$1src=@$2://$3@', '<img$1src=@$2@', '<img$1src="' . $path . '$2"', '<img$1src="$2"',
 					'<script$1src=@$2://$3@', '<script$1src=@$2@', '<script$1src="' . $path . '$2"', '<script$1src="$2"',
 					'<link$1href=@$2://$3@', '<link$1href=@$2@' , '<link$1href="' . $path . '$2"', '<link$1href="$2"'
-				), $html);
+				), ob_get_clean());
+				
 		}
 
 		public function route($pattern, $target) {
@@ -140,7 +154,7 @@ if (!isset($fw)) {
 			}
 			
 			if (is_object($target)) {
-				foreach ((explode('|', self::METHODS)) as $method){
+				foreach ((explode('|', self::Methods)) as $method){
 					$this->route($method.' '.$pattern, $class.'->'.strtolower($method));
 				}
 				return $this;
@@ -172,7 +186,7 @@ if (!isset($fw)) {
 				}
 			}
 			if (isset($route)) {
-				$url = $this->stack['URL'].$route;
+				$url = $this->stack['url'].$route;
 
 				if (preg_match_all('`(/|\.|)\[([^:\]]*+)(?::([^:\]]*+))?\](\?|)`', $route, $matches, PREG_SET_ORDER)) {
 					foreach($matches as $match) {
@@ -194,11 +208,12 @@ if (!isset($fw)) {
 
 		public function run() {
 			if (!isset($this->routes)) $this->error(self::E_Routes);
+			$this->invoke('router_before');
 			foreach($this->routes as $handler) {
 				list($method, $route, $target) = $handler;
 				$method_match = false;
 				foreach(explode('|', $method) as $method) {
-					if (strcasecmp($this->stack['METHOD'], $method) === 0) {
+					if (strcasecmp($this->stack['method'], $method) === 0) {
 						$method_match = true;
 						break;
 					}
@@ -208,7 +223,7 @@ if (!isset($fw)) {
 					!preg_match('/^'.
 					preg_replace('/@(\w+\b)/','(?P<\1>[^\/\?]+)',
 					str_replace('\*','([^\?]*)',preg_quote($route,'/'))).
-					'\/?(?:\?.*)?$/ium',$this->stack['URI'],$params))
+					'\/?(?:\?.*)?$/ium',$this->stack['uri'],$params))
 					continue;
 						
 				if (is_string($target)) {
@@ -228,13 +243,19 @@ if (!isset($fw)) {
 				}
 				
 				if (!function_exists($target)) $this->error(self::E_Function, $target);
-				return call_user_func_array($target, array($this, $params));
+				$this->invoke('dispatch_before');
+				call_user_func_array($target, array($this, $params));
+				$this->invoke('dispatch_after');
+				break;
 			}
-			return call_user_func_array($this->default_route, array($this, null));
+			if (!isset($target)) call_user_func_array($this->default_route, array($this, null));
+			$this->invoke('router_after');
 		}
 	}
 
 	$fw = Base::getInstance();
+	$fw->invoke('before');
 } else {
 	$fw->run();
+	$fw->invoke('after');
 }

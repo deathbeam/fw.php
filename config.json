@@ -1,10 +1,6 @@
 {
-	"plugins": {
-		"md": "parsedown.php"
-	},
 	"routes": {
 		"default" : "error",
-		"GET /": "index",
-		"GET /docs": "docs"
+		"GET /": "index"
 	}
 }
