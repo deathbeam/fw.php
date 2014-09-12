@@ -1,13 +1,6 @@
 <?php
-/** Step 1: Configure fw.php
- * Here we will configure fw using json 
- * configuration file.
- */
 $fw->config('config.json');
-/** Step 2: Define routes
- * In this step we will define functions
- * which we assigned to routes in step 1.
- */
+
 function index($fw, $params) {
 	$fw
 		->set('title','Powered by fw.php')

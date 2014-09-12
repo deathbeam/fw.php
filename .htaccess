@@ -1,12 +1,6 @@
 # Activates URL rewriting (like example.com/route/to/func)
 RewriteEngine On
 
-# Necessary to prevent problems when using a route named "index" and having a root index.php
-Options -MultiViews
-
-# Disallows others to look directly into /public/ folder
-Options -Indexes
-
 # Some servers require you to specify the `RewriteBase` directive
 # In such cases, it should be the path (relative to the document root)
 # containing this .htaccess file
@@ -17,14 +11,6 @@ Options -Indexes
 RewriteCond %{REQUEST_URI} \.json$
 RewriteRule \.json$ - [R=404]
 
-# General rewrite rules
-RewriteCond %{REQUEST_FILENAME} !-d
+# Redirect all requests to fw
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-l
-
-RewriteRule .* index.php [L,QSA]
-RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization},L]
-
-# Include fw.php logic at beggining and at end of index.php file
-php_value auto_prepend_file library/fw.php
-php_value auto_append_file library/fw.php
+RewriteRule ^ fw.php [QSA,L]
