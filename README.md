@@ -4,11 +4,23 @@ becouse fw is blazing fast with minimal overhead (fw.php have less than 10KB), i
 and is built on single PHP file which contains only 12 functions.
 
 ## Table of Contents
+* [Hello World](#hello-world)
 * [Installation](#installation)
+* [API](#api)
 * [Configuration](#configuration)
 * [Views and Templates](#views-and-templates)
 * [Routes](#routes)
 * [License](#license)
+
+## Hello World
+To create your first hello world fw.php application, add this to your index.php
+```php
+$fw->route('GET /@name',
+    function($fw, $params) {
+        echo'Hello, '.$params['name'].'!';
+    }
+);
+```
 
 ## Installation
 
@@ -23,6 +35,23 @@ or c) getting the repo via Composer
 composer create-project deathbeam/fwphp /your/public/web/folder dev-master
 ```
 * Now, we need to install `mod_rewrite` becouse it is required for `.htaccess`.
+
+## API
+| Name                           | Usage                               | Description                                                     |
+|--------------------------------|-------------------------------------|-----------------------------------------------------------------|
+| __set(plugin, value)           | $fw->{plugin} = 'file'              | Loads specified plugin from plugin directory                    |
+| __get(plugin)                  | $plug = $fw->{plugin}               | Gets specified already loaded plugin                            |
+| set(key, value)                | $fw->set('key', 'value')            | Adds specified key to fw.ph stack                               |
+| get(key)                       | $key = $fw->get('key')              | Gets specified key from fw.ph stack                             |
+| exists(key)                    | $exists = $fw->exists('key')        | Checks if specified key exists                                  |
+| clear(key)                     | $fw->clear('key')                   | Removes specified key from fw.php stack                         |
+| stack()                        | $stack = $fw->stack()               | Publish stack contents                                          |
+| hook(name, callable)           | $fw->hook('hook_name') = function() | Adds a new hook to fw.php                                       |
+| invoke(hook, [opt] args)       | $fw->invoke('hook_name')            | Invokes specified hook                                          |
+| config(file)                   | $fw->config('config.json')          | Configure fw.php from json configuration file                   |
+| draw(template)                 | $fw->draw('template.php')           | Renders specified template                                      |
+| route(pattern, callable)       | $fw->route('GET /', function())     | Adds route with specified pattern and callback to routing array |
+| reroute(pattern, [opt] params) | $fw->reroute(/')                    | Redirects user to specified route                               |
 
 ## Configuration
 fw.php can be configured in 2 ways. First one is defining globals and second one is loading them from config file.
