@@ -51,7 +51,7 @@ composer create-project deathbeam/fwphp /your/public/web/folder dev-master
 | config(file)                   | $fw->config('config.json')          | Configure fw.php from json configuration file                   |
 | draw(template)                 | $fw->draw('template.php')           | Renders specified template                                      |
 | route(pattern, callable)       | $fw->route('GET /', function())     | Adds route with specified pattern and callback to routing array |
-| reroute(pattern, [opt] params) | $fw->reroute(/')                    | Redirects user to specified route                               |
+| reroute(pattern, [opt] params) | $fw->reroute('/')                    | Redirects user to specified route                               |
 
 ## Configuration
 fw.php can be configured in 2 ways. First one is defining globals and second one is loading them from config file.
@@ -144,7 +144,7 @@ $fw->route('users_show: GET /users/@id', 'showUser');
 $fw->route('users_do: POST /users/@id/@action', 'userController->@action');
 
 // provide ReST interface by mapping HTTP requests to class method
-$fw->route('/rest', 'some_class');
+$fw->route('MAP /rest', 'some_class');
 
 // default route (404 page)
 $fw->route('default', 'error');

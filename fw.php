@@ -1,5 +1,4 @@
 <?php
-// display informational message if index.php is missing
 if (!file_exists('index.php')) {
 	echo
 		'Create <code>index.php</code> and start making your first
@@ -7,9 +6,7 @@ if (!file_exists('index.php')) {
 		<a href="http://deathbeam.github.io/fwphp/docs.htm">online documentation</a>.';
 	return;
 }
-// load the (optional) Composer auto-loader
 if (file_exists('vendor/autoload.php')) require 'vendor/autoload.php';
-// start the application
 $fw = Base::getInstance();
 require 'index.php';
 $fw->invoke('before');
@@ -167,27 +164,27 @@ class Base {
 
 	public function route($pattern, $callable) {
 		$pattern = strtr($pattern,array(' '=>''));
-
-		if (is_object($callable)) {
-			foreach ((explode('|', self::Methods)) as $method) {
-				$this->route($method.' '.$pattern, $class.'->'.strtolower($method));
-			}
-			return $this;
-		}
 		
 		if ($pattern == 'default') {
 			$this->default_route = $callable;
 			return $this;
 		}
 
-		$arr = explode("/", $pattern, 2);
+		$arr = explode('/', $pattern, 2);
 		$method = $arr[0];
 		$route = '/'.$arr[1];
 		
 		if (strpos($arr[0], ':') !== false) {
-			$arr = explode(":", $arr[0], 2);
+			$arr = explode(':', $arr[0], 2);
 			$name = $arr[0];
 			$method = $arr[1];
+		}
+		
+		if ($method == 'MAP') {
+			foreach ((explode('|', self::Methods)) as $method) {
+				$this->route((isset($name)?$name.':':null).$method.$route, $callable.'->'.strtolower($method));
+			}
+			return $this;
 		}
 		
 		$this->routes[] = array($method, $route, $callable, isset($name)?$name:null);
@@ -230,47 +227,52 @@ class Base {
 		foreach($this->routes as $handler) {
 			list($method, $route, $callable) = $handler;
 			$method_match = false;
+
 			foreach(explode('|', $method) as $method) {
 				if (strcasecmp($this->stack['method'], $method) === 0) {
 					$method_match = true;
 					break;
 				}
 			}
+
 			if (!$method_match or 
 				!preg_match('/^'.
 				preg_replace('/@(\w+\b)/','(?P<\1>[^\/\?]+)',
 				str_replace('\*','([^\?]*)',preg_quote($route,'/'))).
 				'\/?(?:\?.*)?$/ium',$this->stack['uri'],$params))
 				continue;
-			if (is_bool(strpos($route,'/*'))) {
+
+			if (strpos($route,'/*') !== false) {
 				foreach (array_keys($params) as $key)
 					if (is_numeric($key) && $key)
 						unset($params[$key]);
 			}
-			if (is_string($callable)) {
-				$callable = preg_replace_callback('/@(\w+\b)/',
-					function($id) use($params) {
-						return isset($params[$id[1]])?$params[$id[1]]:$id[0];
-					},
-					$callable
-				);
-				if (preg_match('/(.+)\h*(?:->|::)/', $callable, $match)) {
-					if (!class_exists($match[1])) {
+
+			$callable = preg_replace_callback('/@(\w+\b)/',
+				function($id) use($params) {
+					return isset($params[$id[1]])?$params[$id[1]]:$id[0];
+				},
+				$callable
+			);
+
+			if (preg_match('/(.+)\h*(?:->|::)(.+)\h*/', $callable, $match)) {
+				if (!class_exists($match[1])) {
 					$this->error(self::E_Class, $match[1]);
-					} elseif (!method_exists($match[1],$match[2])) {
-						$this->error(self::E_Method, $match[2]);
-					}
+				} elseif (!method_exists($match[1],$match[2])) {
+					$this->error(self::E_Method, $match[2]);
 				}
+				$callable = array($match[1], $match[2]);
 			}
-				
+
 			if (!function_exists($callable)) $this->error(self::E_Function, $callable);
+			
 			$this->invoke('dispatch_before');
-			call_user_func_array($callable, array($this, $params));
+			@call_user_func_array($callable, array($this, $params));
 			$this->invoke('dispatch_after');
 			$routed = true;
 			break;
 		}
-		if (!$routed) call_user_func_array($this->default_route, array($this, null));
+		if (!$routed) @call_user_func_array($this->default_route, array($this, null));
 		$this->invoke('router_after');
 		return $this;
 	}
