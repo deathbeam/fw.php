@@ -12,7 +12,7 @@ function index($fw, $params) {
 				<li>The application code is in <code>index.php</code></li>
 				<li>The configuration code is in <code>config.json</code> (optional)</li>
 				<li>Presentation logic is in <code>public</code> directory (can be changed via <code>public_dir</code> key)</li>
-				<li>Plugins (called also Middlewares) are in <code>plugin</code> directory (can be changed via <code>plugin_dir</code> key)</li>
+				<li>Plugins (optional) are in <code>plugin</code> directory (can be changed via <code>plugin_dir</code> key)</li>
 				<li>Read the <a target="_blank" href="http://deathbeam.github.io/fwphp/docs.htm">online documentation</a></li>
 				<li>Star and watch fw.php on <a target="_blank" href="https://github.com/deathbeam/fwphp">GitHub</a></li>
 			</ol>

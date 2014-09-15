@@ -1,17 +1,5 @@
 <?php
-if (!file_exists('index.php')) {
-	echo
-		'Create <code>index.php</code> and start making your first
-		<code>fw.php</code> application. If you need help, please read 
-		<a href="http://deathbeam.github.io/fwphp/docs.htm">online documentation</a>.';
-	return;
-}
-if (file_exists('vendor/autoload.php')) require 'vendor/autoload.php';
-$fw = Base::getInstance();
-require 'index.php';
-$fw->invoke('before');
-$fw->run();
-$fw->invoke('after');
+Base::execute();
 
 abstract class Plugin {
 	public static function getInstance() {
@@ -29,6 +17,10 @@ abstract class Plugin {
 class Base {
 	const
 		Methods = 'GET|HEAD|POST|PUT|PATCH|DELETE|CONNECT',
+		E_Index = 
+				'Create <code>index.php</code> and start making your first
+				<code>fw.php</code> application. If you need help, please read 
+				<a href="http://deathbeam.github.io/fwphp/docs.htm">online documentation</a>.',
 		E_Stack = 'Invalid stack key %s',
 		E_Route='Route does not exist: %s',
 		E_Routes = 'No routes specified',
@@ -48,6 +40,18 @@ class Base {
 		static $instance = null;
 		if (null === $instance) $instance = new static();
 		return $instance;
+	}
+	
+	public static function execute() {
+		if (file_exists('vendor/autoload.php')) require 'vendor/autoload.php';
+		$fw = self::getInstance();
+		if (!file_exists('index.php'))
+			$fw->error(self::E_Index);
+		else
+			require 'index.php';
+		$fw->invoke('before');
+		$fw->run();
+		$fw->invoke('after');
 	}
 
 	protected function __construct() {
@@ -71,13 +75,10 @@ class Base {
 		);
 	}
 		
-	protected function error($message, $arg = null) {
-		if (isset($arg)) {
-			$errMessage = strtr($message,array('%s'=>$arg));
-		} else {
-			$errMessage = $message;
-		}
-		throw new Exception($errMessage);
+	public function error($message, $arg = null) {
+		if (isset($arg)) $message = strtr($message,array('%s'=>$arg));
+		echo $message;
+		exit();
 	}
 
 	public function __set($plugin, $value) {
@@ -127,17 +128,19 @@ class Base {
 	}
 
 	public function invoke($hook, $arg = null) {
-		if (isset($this->hooks[$hook]) && is_callable($this->hooks[$hook])) {
+		if (isset($this->hooks[$hook]) && is_callable($this->hooks[$hook]))
 			call_user_func($this->hooks[$hook], $arg);
-		}
 		return $this;
 	}
 
 	public function config($file = null) {
 		$config = json_decode(file_get_contents($file),true);
-		if (isset($config['globals'])) foreach ($config['globals'] as $key => $value) $this->set($key, $value);
-		if (isset($config['plugins'])) foreach ($config['plugins'] as $key => $value) $this->{strtr($key,array(' '=>''))} = strtr($value,array(' '=>''));
-		if (isset($config['routes'])) foreach ($config['routes'] as $key => $value) $this->route($key, $value);
+		if (isset($config['globals'])) foreach ($config['globals'] as $key => $value)
+			$this->set($key, $value);
+		if (isset($config['plugins'])) foreach ($config['plugins'] as $key => $value)
+			$this->{strtr($key,array(' '=>''))} = strtr($value,array(' '=>''));
+		if (isset($config['routes'])) foreach ($config['routes'] as $key => $value)
+			$this->route($key, $value);
 		return $this;
 	}
 
@@ -154,9 +157,9 @@ class Base {
 				'/<link(.*?)href=(?:")(http|https)\:\/\/([^"]+?)(?:")/i','/<link(.*?)href=(?:")([^"]+?)#(?:")/i','/<link(.*?)href="(.*?)"/','/<link(.*?)href=(?:\@)([^"]+?)(?:\@)/i'
 			), 
 			array(
-				'<img$1src=@$2://$3@', '<img$1src=@$2@', '<img$1src="' . $this->stack['url'].'/'.$path . '$2"', '<img$1src="$2"',
-				'<script$1src=@$2://$3@', '<script$1src=@$2@', '<script$1src="' . $this->stack['url'].'/'.$path . '$2"', '<script$1src="$2"',
-				'<link$1href=@$2://$3@', '<link$1href=@$2@' , '<link$1href="' . $this->stack['url'].'/'.$path . '$2"', '<link$1href="$2"'
+				'<img$1src=@$2://$3@', '<img$1src=@$2@', '<img$1src="'.$this->stack['url'].'/'.$path.'$2"', '<img$1src="$2"',
+				'<script$1src=@$2://$3@', '<script$1src=@$2@', '<script$1src="'.$this->stack['url'].'/'.$path.'$2"', '<script$1src="$2"',
+				'<link$1href=@$2://$3@', '<link$1href=@$2@' , '<link$1href="'.$this->stack['url'].'/'.$path.'$2"', '<link$1href="$2"'
 			), ob_get_clean()
 		);
 		return $this;
@@ -201,6 +204,7 @@ class Base {
 				break;
 			}
 		}
+		
 		if (isset($route)) {
 			$url = $this->stack['url'].$route;
 			if (preg_match_all('`(/|\.|)\[([^:\]]*+)(?::([^:\]]*+))?\](\?|)`', $route, $matches, PREG_SET_ORDER)) {
@@ -224,6 +228,7 @@ class Base {
 		if (!isset($this->routes)) $this->error(self::E_Routes);
 		$this->invoke('router_before');
 		$routed = false;
+		
 		foreach($this->routes as $handler) {
 			list($method, $route, $callable) = $handler;
 			$method_match = false;
@@ -272,6 +277,7 @@ class Base {
 			$routed = true;
 			break;
 		}
+		
 		if (!$routed) @call_user_func_array($this->default_route, array($this, null));
 		$this->invoke('router_after');
 		return $this;
