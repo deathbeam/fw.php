@@ -1,13 +1,10 @@
 #{ fw.php } code less, create more
-
-
-## Table of Contents
 * [Hello World](#hello-world)
 * [Installation](#installation)
-* [API](#api)
 * [Configuration](#configuration)
 * [Templates](#templates)
 * [Routes](#routes)
+* [API](#api)
 * [License](#license)
 
 ## Hello World
@@ -40,23 +37,6 @@ composer create-project deathbeam/fwphp /your/public/web/folder dev-master
 
 Now, we need to install `mod_rewrite` becouse it is required for `.htaccess`.
 
-## API
-| Name                           | Usage                               | Description                                                     |
-|--------------------------------|-------------------------------------|-----------------------------------------------------------------|
-| __set(plugin, value)           | $fw->{plugin} = 'file'              | Loads specified plugin from plugin directory                    |
-| __get(plugin)                  | $plug = $fw->{plugin}               | Gets specified already loaded plugin                            |
-| set(key, value)                | $fw->set('key', 'value')            | Adds specified key to fw.ph stack                               |
-| get(key)                       | $key = $fw->get('key')              | Gets specified key from fw.ph stack                             |
-| exists(key)                    | $exists = $fw->exists('key')        | Checks if specified key exists                                  |
-| clear(key)                     | $fw->clear('key')                   | Removes specified key from fw.php stack                         |
-| stack()                        | $stack = $fw->stack()               | Publish stack contents                                          |
-| hook(name, callable)           | $fw->hook('hook_name') = function() | Adds a new hook to fw.php                                       |
-| invoke(hook, [opt] args)       | $fw->invoke('hook_name')            | Invokes specified hook                                          |
-| config(file)                   | $fw->config('config.json')          | Configure fw.php from json configuration file                   |
-| draw(template)                 | $fw->draw('template.php')           | Renders specified template                                      |
-| route(pattern, callable)       | $fw->route('GET /', function())     | Adds route with specified pattern and callback to routing array |
-| reroute(pattern, [opt] params) | $fw->reroute('/')                    | Redirects user to specified route                               |
-
 ## Configuration
 fw.php can be configured in 2 ways. First one is using only `php` and second one is loading configuration from `json` file.
 In examples below, we will:
@@ -64,7 +44,7 @@ In examples below, we will:
 * Change directory of public files from default `public` to `new_public_dir`
 * Set `/` route to `index` function
 
-### Using `php` only
+#### Using `php` only
 This is basic configuration from `index.php`. 
 ```php
 $fw->set('public_dir', 'new_public_dir');
@@ -72,7 +52,7 @@ $fw->cookie = 'cookie.php';
 $fw->route('GET /', 'index');
 ```
 
-### Using `json` configuration file
+#### Using `json` configuration file
 Below is example on how to configure fw from .json file
 ```php
 $fw->config('config.json');
@@ -101,7 +81,7 @@ $fw->draw('test.php');
 ```
 Templates can read global variables set by `$fw->set` method.
 
-### Example template
+#### Example template
 Below, we will create simple template logic.
 
 Code what will go into routed function in `index.php`
@@ -142,7 +122,7 @@ In fw.php I implemented routing very similar to F3 routing. Features:
 * Flexible regular expression routing
 * ReST route mapping
 
-### Example routing
+#### Example routing
 ```php
 // mapping routes
 $fw->route('home: GET|POST /', 'home');
@@ -160,6 +140,23 @@ $fw->route('default', 'error');
 $fw->reroute('users_show', array('id' => 5));
 $fw->reroute('/users');
 ```
+
+## API
+| Name                           | Usage                               | Description                                                     |
+|--------------------------------|-------------------------------------|-----------------------------------------------------------------|
+| __set(plugin, value)           | $fw->{plugin} = 'file'              | Loads specified plugin from plugin directory                    |
+| __get(plugin)                  | $plug = $fw->{plugin}               | Gets specified already loaded plugin                            |
+| set(key, value)                | $fw->set('key', 'value')            | Adds specified key to fw.ph stack                               |
+| get(key)                       | $key = $fw->get('key')              | Gets specified key from fw.ph stack                             |
+| exists(key)                    | $exists = $fw->exists('key')        | Checks if specified key exists                                  |
+| clear(key)                     | $fw->clear('key')                   | Removes specified key from fw.php stack                         |
+| stack()                        | $stack = $fw->stack()               | Publish stack contents                                          |
+| hook(name, callable)           | $fw->hook('hook_name') = function() | Adds a new hook to fw.php                                       |
+| invoke(hook, [opt] args)       | $fw->invoke('hook_name')            | Invokes specified hook                                          |
+| config(file)                   | $fw->config('config.json')          | Configure fw.php from json configuration file                   |
+| draw(template)                 | $fw->draw('template.php')           | Renders specified template                                      |
+| route(pattern, callable)       | $fw->route('GET /', function())     | Adds route with specified pattern and callback to routing array |
+| reroute(pattern, [opt] params) | $fw->reroute('/')                    | Redirects user to specified route                               |
 
 ## License
 ```
