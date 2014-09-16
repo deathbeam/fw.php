@@ -1,19 +1,17 @@
-fw.php is aiming to be blazing fast and simple PHP micro framework. It is inspired by my personally favorite framework, F3(fat free), but
-fw.php have only features what are barebone for framework. fw do not have caching, but it do not really needs it 
-becouse fw is blazing fast with minimal overhead (fw.php have less than 10KB), its templating system uses only PHP
-and is built on single PHP file which contains only 12 functions.
+#{ fw.php } code less, create more
+
 
 ## Table of Contents
 * [Hello World](#hello-world)
 * [Installation](#installation)
 * [API](#api)
 * [Configuration](#configuration)
-* [Views and Templates](#views-and-templates)
+* [Templates](#templates)
 * [Routes](#routes)
 * [License](#license)
 
 ## Hello World
-To create your first hello world fw.php application, add this to your index.php
+To create your first hello world fw.php application, create `index.php` and add below to it
 ```php
 $fw->route('GET /@name',
     function($fw, $params) {
@@ -23,18 +21,24 @@ $fw->route('GET /@name',
 ```
 
 ## Installation
+Copy this repo into a public accessible folder on your server (or to public_html folder of your FTP if you are using shared hosting). There are muliple ways to get fw.php:
 
-* copy this repo into a public accessible folder on your server (or to public_html folder of your FTP if you are using shared hosting).
+a) download and extract .zip /.tgz by hand
+```
+https://github.com/deathbeam/fwphp/archive/master.zip
+```
 
-Common techniques are a) downloading and extracting the .zip / .tgz by hand, b) cloning the repo with git (into var/www if you are on Linux or wamp/www if you are on Windows and have Wamp installed)
+b) cloning the repo with git
 ```
 git clone https://github.com/deathbeam/fwphp.git /your/public/web/folder
 ```
-or c) getting the repo via Composer
+
+c) getting the repo via Composer
 ```
 composer create-project deathbeam/fwphp /your/public/web/folder dev-master
 ```
-* Now, we need to install `mod_rewrite` becouse it is required for `.htaccess`.
+
+Now, we need to install `mod_rewrite` becouse it is required for `.htaccess`.
 
 ## API
 | Name                           | Usage                               | Description                                                     |
@@ -54,26 +58,26 @@ composer create-project deathbeam/fwphp /your/public/web/folder dev-master
 | reroute(pattern, [opt] params) | $fw->reroute('/')                    | Redirects user to specified route                               |
 
 ## Configuration
-fw.php can be configured in 2 ways. First one is defining globals and second one is loading them from config file.
+fw.php can be configured in 2 ways. First one is using only `php` and second one is loading configuration from `json` file.
 In examples below, we will:
 * Load `cookie.php` extension from `plugins` folder
 * Change directory of public files from default `public` to `new_public_dir`
 * Set `/` route to `index` function
 
-### Defining globals
-This is basic configuration from index.php. 
+### Using `php` only
+This is basic configuration from `index.php`. 
 ```php
 $fw->set('public_dir', 'new_public_dir');
 $fw->cookie = 'cookie.php';
 $fw->route('GET /', 'index');
 ```
 
-### Loading configuration file
-Loading configuration file is as easy as drinking beer.
+### Using `json` configuration file
+Below is example on how to configure fw from .json file
 ```php
 $fw->config('config.json');
 ```
-And some basic configuration example is below:
+And here is content of `config.json`
 ```JSON
 {
 	"globals": {
@@ -88,8 +92,9 @@ And some basic configuration example is below:
 }
 ```
 
-## Views and Templates
+## Templates
 fw.php have super simple templating system using PHP as templating language.
+
 Drawing template is simple:
 ```php
 $fw->draw('test.php');
@@ -98,6 +103,7 @@ Templates can read global variables set by `$fw->set` method.
 
 ### Example template
 Below, we will create simple template logic.
+
 Code what will go into routed function in `index.php`
 ```php
 $fw
@@ -106,8 +112,9 @@ $fw
 	->set('footer','This is example footer'))
 	->draw('default.php');
 ```
+
 We will save code below as `default.php` to `/public` directory
-```php
+```html
 <!doctype html>
 <html>
 	<head>
@@ -117,13 +124,13 @@ We will save code below as `default.php` to `/public` directory
 	<body>
 		<header>
 			<h1>You are viewing the default page!</h1>
-			<?php echo $header;?>
+			<?=$header?>
 		</header>
 		<section>
-			<?php echo $body;?>
+			<?=$body?>
 		</section>
 		<footer>
-			<?php echo $footer;?>
+			<?=$footer?>
 		</footer>
 	</body>
 </html>
