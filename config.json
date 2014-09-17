@@ -1,6 +1,0 @@
-{
-	"routes": {
-		"default" : "error",
-		"GET /": "index"
-	}
-}

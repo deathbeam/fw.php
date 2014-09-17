@@ -1,5 +1,5 @@
 <?php
-return Session::getInstance();
+return Session::instance();
 
 class Session extends Plugin {
 	private $name = false;

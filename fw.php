@@ -1,22 +1,40 @@
-<?php
-Base::execute();
+<?php App::execute();
 
+//! Abstract class for application plugins
 abstract class Plugin {
-	public static function getInstance() {
+
+	/**
+	*	Return plugin instance
+	*	@return static
+	**/
+	public static function instance() {
 		static $instance = null;
 		if (null === $instance) $instance = new static();
 		return $instance;
 	}
-
-	public function init($less) { }
+	
+	/**
+	*	Handle plugin initialization
+	*	@return NULL
+	**/
+	public function init($fw) { }
+	
 	protected function __construct() { }
 	private function __clone() { }
 	private function __wakeup() { }
 }
 
-class Base {
+//! Base structure
+class App {
+
+	//@{ Framework details
 	const
-		Methods = 'GET|HEAD|POST|PUT|PATCH|DELETE|CONNECT',
+		PACKAGE='fw.php',
+		VERSION='0.5.0-Beta';
+	//@}
+	
+	//@{ Error messages
+	const
 		E_Index = 
 				'Create <code>index.php</code> and start making your first
 				<code>fw.php</code> application. If you need help, please read 
@@ -28,35 +46,39 @@ class Base {
 		E_Method='Invalid method %s',
 		E_Function='Invalid function %s',
 		E_Plugin = 'Invalid plugin %s';
+	//@}
 		
 	protected 
+		//! Globals
 		$stack,
+		//! Array of plugins
 		$plugins,
+		//! Routing table
 		$routes,
-		$hooks,
+		//! Default route
 		$default_route;
-
-	public static function getInstance() {
-		static $instance = null;
-		if (null === $instance) $instance = new static();
-		return $instance;
-	}
 	
+	/**
+	*	Bootstrap
+	*	@return NULL
+	**/
 	public static function execute() {
 		if (file_exists('vendor/autoload.php')) require 'vendor/autoload.php';
-		$fw = self::getInstance();
+		$fw = new App();
 		if (!file_exists('index.php'))
 			$fw->error(self::E_Index);
 		else
 			require 'index.php';
-		$fw->invoke('before');
 		$fw->run();
-		$fw->invoke('after');
 	}
-
+	
+	/**
+	*	Set default settings and initialize app
+	*	@return NULL
+	**/
 	protected function __construct() {
 		error_reporting(E_ALL);
-		ini_set("display_errors", 1);
+		ini_set('display_errors', 1);
 		ini_set('default_charset', $charset='UTF-8');
 		if (extension_loaded('mbstring')) mb_internal_encoding($charset);
 		$this->default_route = function() { echo '<h1>404!</h1> Page not found.'; };
@@ -65,34 +87,59 @@ class Base {
 		$method = isset($_SERVER['REQUEST_METHOD'])? $_SERVER['REQUEST_METHOD']: 'GET';
 
 		$this->stack = array (
-			'time' => microtime(TRUE),
 			'encoding'=> $charset,
+			'method' => $method,
+			'package' => self::PACKAGE,
+			'public_dir' => 'public',
+			'plugin_dir' => 'plugins',
+			'time' => microtime(TRUE),
 			'url' => $url,
 			'uri' => $uri,
-			'method' => $method,
-			'public_dir' => 'public',
-			'plugin_dir' => 'plugins'
+			'version' => self::VERSION
 		);
 	}
-		
+	
+	/**
+	*	Display default error page
+	*	@return NULL
+	*	@param $message string
+	*	@param $arg string
+	**/
 	public function error($message, $arg = null) {
 		if (isset($arg)) $message = strtr($message,array('%s'=>$arg));
 		echo $message;
 		exit();
 	}
-
+	
+	/**
+	*	Loads specified plugin from plugin directory
+	*	@return object
+	*	@param $plugin string
+	*	@param $value string
+	**/
 	public function __set($plugin, $value) {
 		if (isset($this->plugins[$plugin])) $this->error(self::E_Plugin, $plugin);
 		$this->plugins[$plugin] = include $this->stack['plugin_dir'].'/'.$value;
 		$this->plugins[$plugin]->init($this);
 		return $this;
 	}
-
+	
+	/**
+	*	Loads specified plugin from plugin directory
+	*	@return object
+	*	@param $plugin string
+	**/
 	public function __get($plugin) {
 		if (!isset($this->plugins[$plugin])) $this->error(self::E_Plugin, $plugin);
 		return $this->plugins[$plugin];
 	}
-
+	
+	/**
+	*	Bind value to stack key
+	*	@return mixed
+	*	@param $key string
+	*	@param $value mixed
+	**/
 	public function set($key, $value) {
 		$this->stack[$key] = $value;
 		if ($key == 'encoding') {
@@ -102,38 +149,50 @@ class Base {
 		return $this;
 	}
 
+	/**
+	*	Retrieve contents of stack key
+	*	@return mixed
+	*	@param $key string
+	**/
 	public function get($key) {
 		if (!isset($this->stack[$key])) $this->error(self::E_Stack, $key);
 		return $this->stack[$key];
 	}
 
+	/**
+	*	Return TRUE if stack key is set
+	*	@return bool
+	*	@param $key string
+	**/
 	public function exists($key) {
 		return isset($this->stack[$key]);
 	}
 
+	/**
+	*	Unset stack key
+	*	@return object
+	*	@param $key string
+	**/
 	public function clear($key) {
 		if (!isset($this->stack[$key])) $this->error(self::E_Stack, $key);
 		unset($this->stack[$key]);
 		return $this;
 	}
 
+	/**
+	*	Publish stack contents
+	*	@return array
+	**/
 	public function stack() {
 		return $this->stack;
 	}
-		
-	public function hook($name, $callable) {
-		if (!is_callable($callable)) $this->error(self::E_Function, $callable);
-		$this->hooks[$name] = $callable;
-		return $this;
-	}
 
-	public function invoke($hook, $arg = null) {
-		if (isset($this->hooks[$hook]) && is_callable($this->hooks[$hook]))
-			call_user_func($this->hooks[$hook], $arg);
-		return $this;
-	}
-
-	public function config($file = null) {
+	/**
+	*	Configure framework according to .json-style file settings
+	*	@return object
+	*	@param $file string
+	**/
+	public function config($file) {
 		$config = json_decode(file_get_contents($file),true);
 		if (isset($config['globals'])) foreach ($config['globals'] as $key => $value)
 			$this->set($key, $value);
@@ -144,12 +203,15 @@ class Base {
 		return $this;
 	}
 
+	/**
+	*	Draw template
+	*	@return object
+	*	@param $template string
+	**/
 	public function draw($template) {
 		extract(array_map('urldecode', $this->stack));
 		ob_start();
-		$this->invoke('draw_before');
 		include ($path = $this->stack['public_dir'].'/').$template;
-		$this->invoke('draw_after');
 		echo preg_replace(
 			array(
 				'/<img(.*?)src=(?:")(http|https)\:\/\/([^"]+?)(?:")/i','/<img(.*?)src=(?:")([^"]+?)#(?:")/i','/<img(.*?)src="(.*?)"/', '/<img(.*?)src=(?:\@)([^"]+?)(?:\@)/i',
@@ -165,6 +227,12 @@ class Base {
 		return $this;
 	}
 
+	/**
+	*	Bind callable to route pattern
+	*	@return object
+	*	@param $pattern string
+	*	@param $callable callback
+	**/
 	public function route($pattern, $callable) {
 		$pattern = strtr($pattern,array(' '=>''));
 		
@@ -184,7 +252,7 @@ class Base {
 		}
 		
 		if ($method == 'MAP') {
-			foreach ((explode('|', self::Methods)) as $method) {
+			foreach ((explode('|', 'GET|HEAD|POST|PUT|PATCH|DELETE|CONNECT')) as $method) {
 				$this->route((isset($name)?$name.':':null).$method.$route, $callable.'->'.strtolower($method));
 			}
 			return $this;
@@ -194,14 +262,18 @@ class Base {
 		return $this;
 	}
 
+/**
+	*	Redirect to specified route
+	*	@return NULL
+	*	@param $pattern string
+	*	@param $params array
+	**/
 	public function reroute($pattern, array $params = array()) {
 		foreach ($this->routes as $_route) {
 			if (isset($_route[1]) and $_route[1] == $pattern) { 
-				$route = $_route[1];
-				break;
+				$route = $_route[1]; break;
 			} elseif (isset($_route[3]) and $_route[3] == $pattern) { 
-				$route = $_route[1];
-				break;
+				$route = $_route[1]; break;
 			}
 		}
 		
@@ -224,9 +296,12 @@ class Base {
 		}
 	}
 
-	public function run() {
+	/**
+	*	Match routes against incoming URI
+	*	@return NULL
+	**/
+	protected function run() {
 		if (!isset($this->routes)) $this->error(self::E_Routes);
-		$this->invoke('router_before');
 		$routed = false;
 		
 		foreach($this->routes as $handler) {
@@ -235,8 +310,7 @@ class Base {
 
 			foreach(explode('|', $method) as $method) {
 				if (strcasecmp($this->stack['method'], $method) === 0) {
-					$method_match = true;
-					break;
+					$method_match = true; break;
 				}
 			}
 
@@ -253,33 +327,31 @@ class Base {
 						unset($params[$key]);
 			}
 
-			$callable = preg_replace_callback('/@(\w+\b)/',
-				function($id) use($params) {
-					return isset($params[$id[1]])?$params[$id[1]]:$id[0];
-				},
-				$callable
-			);
-
-			if (preg_match('/(.+)\h*(?:->|::)(.+)\h*/', $callable, $match)) {
-				if (!class_exists($match[1])) {
-					$this->error(self::E_Class, $match[1]);
-				} elseif (!method_exists($match[1],$match[2])) {
-					$this->error(self::E_Method, $match[2]);
+			if (is_string($callable)) {
+				$callable = preg_replace_callback('/@(\w+\b)/',
+					function($id) use($params) {
+						return isset($params[$id[1]])?$params[$id[1]]:$id[0];
+					},
+					$callable
+				);
+				
+				if (preg_match('/(.+)\h*(?:->|::)(.+)\h*/', $callable, $match)) {
+					if (!class_exists($match[1])) {
+						$this->error(self::E_Class, $match[1]);
+					} elseif (!method_exists($match[1],$match[2])) {
+						$this->error(self::E_Method, $match[2]);
+					}
+					$callable = array($match[1], $match[2]);
 				}
-				$callable = array($match[1], $match[2]);
+
+				if (!function_exists($callable)) $this->error(self::E_Function, $callable);
 			}
 
-			if (!function_exists($callable)) $this->error(self::E_Function, $callable);
-			
-			$this->invoke('dispatch_before');
 			@call_user_func_array($callable, array($this, $params));
-			$this->invoke('dispatch_after');
 			$routed = true;
 			break;
 		}
 		
 		if (!$routed) @call_user_func_array($this->default_route, array($this, null));
-		$this->invoke('router_after');
-		return $this;
 	}
 }

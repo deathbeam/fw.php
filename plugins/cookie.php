@@ -1,5 +1,5 @@
 <?php
-return Cookie::getInstance();
+return Cookie::instance();
 
 class Cookie extends Plugin {
 	private $expiry = 86400;

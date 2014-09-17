@@ -1,5 +1,5 @@
 <?php
-return Db::getInstance();
+return Db::instance();
 
 class Db extends Plugin {
     private $dbh;
